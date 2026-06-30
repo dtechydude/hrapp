@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DY CONNECT – Enterprise HR, Payroll & Accounting Management System</title>
+  <meta name="description" content="Enterprise-grade Human Resource, Payroll & Accounting Management System for manpower outsourcing companies." />
+
+  <!-- Bootstrap 5.3 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── Design Tokens ─── */
+    :root {
+      --navy:       #0B1D3A;
+      --navy-mid:   #132848;
+      --navy-light: #1C3A5E;
+      --gold:       #C9A84C;
+      --gold-light: #E2C47A;
+      --silver:     #8A9BB0;
+      --surface:    #F4F7FB;
+      --white:      #FFFFFF;
+      --text-main:  #1A2B42;
+      --text-muted: #5A6E85;
+      --border:     #D8E3EE;
+      --danger:     #C0392B;
+
+      --font-display: 'Sora', sans-serif;
+      --font-body:    'Inter', sans-serif;
+
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+
+      --shadow-sm: 0 2px 8px rgba(11,29,58,.08);
+      --shadow-md: 0 8px 32px rgba(11,29,58,.14);
+      --shadow-lg: 0 20px 60px rgba(11,29,58,.18);
+    }
+
+    /* ─── Reset & Base ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      color: var(--text-main);
+      background: var(--white);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4, h5 { font-family: var(--font-display); }
+    a { text-decoration: none; }
+    img { max-width: 100%; }
+
+    /* ─── Utility ─── */
+    .text-gold    { color: var(--gold) !important; }
+    .text-navy    { color: var(--navy) !important; }
+    .text-silver  { color: var(--silver) !important; }
+    .bg-navy      { background: var(--navy) !important; }
+    .bg-surface   { background: var(--surface) !important; }
+    .fw-600       { font-weight: 600; }
+    .fw-700       { font-weight: 700; }
+    .section-pad  { padding: 96px 0; }
+    .section-pad-sm { padding: 64px 0; }
+
+    .section-label {
+      display: inline-block;
+      font-family: var(--font-body);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(1.75rem, 3.5vw, 2.6rem);
+      font-weight: 800;
+      line-height: 1.2;
+      color: var(--navy);
+    }
+    .section-sub {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    /* ─── Buttons ─── */
+    .btn-gold {
+      background: var(--gold);
+      color: var(--navy);
+      font-weight: 700;
+      font-family: var(--font-body);
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: .7rem 1.6rem;
+      font-size: .9rem;
+      letter-spacing: .02em;
+      transition: background .2s, box-shadow .2s, transform .15s;
+    }
+    .btn-gold:hover {
+      background: var(--gold-light);
+      color: var(--navy);
+      box-shadow: 0 4px 20px rgba(201,168,76,.35);
+      transform: translateY(-1px);
+    }
+    .btn-outline-white {
+      border: 1.5px solid rgba(255,255,255,.5);
+      color: var(--white);
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      padding: .68rem 1.6rem;
+      font-size: .9rem;
+      background: transparent;
+      transition: border-color .2s, background .2s;
+    }
+    .btn-outline-white:hover {
+      border-color: var(--gold);
+      background: rgba(201,168,76,.12);
+      color: var(--gold);
+    }
+    .btn-navy {
+      background: var(--navy);
+      color: var(--white);
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: .7rem 1.6rem;
+      font-size: .9rem;
+      transition: background .2s, transform .15s;
+    }
+    .btn-navy:hover {
+      background: var(--navy-light);
+      color: var(--white);
+      transform: translateY(-1px);
+    }
+
+    /* ─── Topbar ─── */
+    #topbar {
+      background: var(--navy);
+      padding: 7px 0;
+      font-size: .78rem;
+      color: var(--silver);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    #topbar a { color: var(--gold); transition: color .2s; }
+    #topbar a:hover { color: var(--gold-light); }
+
+    /* ─── Navbar ─── */
+    #mainNav {
+      background: var(--navy-mid);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      padding: 14px 0;
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      transition: box-shadow .3s;
+    }
+    #mainNav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,.3); }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.18rem;
+      color: var(--white) !important;
+    }
+    .brand-icon {
+      width: 38px; height: 38px;
+      background: var(--gold);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: var(--navy); font-weight: 800;
+    }
+    .brand-sub { font-size: .62rem; color: var(--silver); font-weight: 400; letter-spacing: .05em; display: block; line-height: 1; }
+    .nav-link-custom {
+      color: rgba(255,255,255,.75) !important;
+      font-size: .85rem;
+      font-weight: 500;
+      padding: 6px 14px !important;
+      border-radius: var(--radius-sm);
+      transition: color .2s, background .2s;
+    }
+    .nav-link-custom:hover, .nav-link-custom.active {
+      color: var(--gold) !important;
+      background: rgba(201,168,76,.1);
+    }
+    .navbar-toggler { border: 1px solid rgba(255,255,255,.2); }
+    .navbar-toggler-icon { filter: invert(1); }
+
+    /* ─── Hero ─── */
+    #hero {
+      background: var(--navy);
+      min-height: 100vh;
+      display: flex; align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-grid-bg {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(201,168,76,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,.06) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+    .hero-glow {
+      position: absolute;
+      width: 640px; height: 640px;
+      background: radial-gradient(circle, rgba(201,168,76,.14) 0%, transparent 70%);
+      top: -120px; right: -100px;
+      pointer-events: none;
+    }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(201,168,76,.12);
+      border: 1px solid rgba(201,168,76,.3);
+      border-radius: 100px;
+      padding: 5px 14px;
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      color: var(--white);
+      margin-bottom: 24px;
+    }
+    .hero-title .accent { color: var(--gold); }
+    .hero-desc {
+      font-size: 1.1rem;
+      color: rgba(255,255,255,.65);
+      margin-bottom: 40px;
+      max-width: 500px;
+      line-height: 1.75;
+    }
+    .hero-stat-row { display: flex; gap: 32px; margin-top: 48px; flex-wrap: wrap; }
+    .hero-stat { text-align: left; }
+    .hero-stat .num {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .hero-stat .lbl {
+      font-size: .75rem;
+      color: var(--silver);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .hero-stat-divider { width: 1px; background: rgba(255,255,255,.1); }
+
+    /* Hero Dashboard Preview */
+    .hero-visual {
+      position: relative;
+    }
+    .dashboard-preview {
+      background: var(--navy-light);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+    }
+    .dp-header {
+      background: var(--navy-mid);
+      padding: 12px 18px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .dp-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dp-title { color: var(--silver); font-size: .75rem; margin-left: 8px; font-weight: 500; }
+    .dp-body { padding: 20px; }
+    .dp-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 14px; }
+    .dp-card {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+    .dp-card .val { font-size: 1.5rem; font-weight: 800; font-family: var(--font-display); color: var(--white); }
+    .dp-card .lbl { font-size: .67rem; color: var(--silver); text-transform: uppercase; letter-spacing: .06em; }
+    .dp-card .delta { font-size: .7rem; color: #4CAF82; margin-top: 4px; }
+    .dp-bar-row { display: flex; flex-direction: column; gap: 8px; }
+    .dp-bar-item { }
+    .dp-bar-label { display: flex; justify-content: space-between; font-size: .7rem; color: var(--silver); margin-bottom: 4px; }
+    .dp-bar-track { height: 5px; background: rgba(255,255,255,.08); border-radius: 3px; }
+    .dp-bar-fill { height: 5px; border-radius: 3px; background: var(--gold); }
+    .dp-bar-fill.green { background: #4CAF82; }
+    .dp-bar-fill.blue { background: #5B9BD5; }
+    .floating-badge {
+      position: absolute;
+      background: var(--white);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-md);
+      display: flex; align-items: center; gap: 10px;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .floating-badge .ico { font-size: 1.3rem; }
+    .fb-top { top: -18px; right: 20px; }
+    .fb-bot { bottom: -18px; left: 20px; }
+
+    /* ─── Feature Cards ─── */
+    .feature-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 32px 28px;
+      height: 100%;
+      transition: box-shadow .25s, transform .25s, border-color .25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .3s;
+    }
+    .feature-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-4px);
+      border-color: var(--gold-light);
+    }
+    .feature-card:hover::after { transform: scaleX(1); }
+    .feature-icon {
+      width: 52px; height: 52px;
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      color: var(--navy);
+      margin-bottom: 20px;
+      transition: background .25s, color .25s;
+    }
+    .feature-card:hover .feature-icon {
+      background: var(--navy);
+      color: var(--gold);
+    }
+    .feature-card h5 {
+      font-size: 1.02rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--navy);
+    }
+    .feature-card p { font-size: .875rem; color: var(--text-muted); line-height: 1.65; margin: 0; }
+
+    /* ─── Modules Section ─── */
+    .module-tab-bar {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 40px;
+    }
+    .mod-tab {
+      border: 1.5px solid var(--border);
+      border-radius: 100px;
+      padding: 7px 18px;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      background: var(--white);
+      transition: all .2s;
+    }
+    .mod-tab.active, .mod-tab:hover {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: var(--white);
+    }
+    .module-panel { display: none; }
+    .module-panel.active { display: block; }
+    .module-detail-card {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 36px;
+      border: 1px solid var(--border);
+    }
+    .mod-feature-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+    .mod-feature-list li {
+      font-size: .85rem;
+      color: var(--text-main);
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      background: var(--white);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    .mod-feature-list li i { color: var(--gold); flex-shrink: 0; }
+
+    /* ─── Role Cards ─── */
+    .role-card {
+      background: var(--navy);
+      border-radius: var(--radius-md);
+      padding: 28px 24px;
+      color: var(--white);
+      height: 100%;
+      border: 1px solid rgba(255,255,255,.08);
+      transition: transform .25s, box-shadow .25s;
+    }
+    .role-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+    .role-card .ri { font-size: 2rem; color: var(--gold); margin-bottom: 14px; }
+    .role-card h5 { font-size: .95rem; font-weight: 700; margin-bottom: 8px; color: var(--white); }
+    .role-card p { font-size: .8rem; color: var(--silver); line-height: 1.6; margin: 0; }
+
+    /* ─── Stats Banner ─── */
+    #stats-banner { background: var(--gold); padding: 56px 0; }
+    .stat-block { text-align: center; }
+    .stat-block .num {
+      font-family: var(--font-display);
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+    }
+    .stat-block .desc { font-size: .82rem; color: var(--navy-mid); font-weight: 600; margin-top: 6px; text-transform: uppercase; letter-spacing: .06em; }
+    .stat-divider { width: 1px; background: rgba(11,29,58,.15); }
+
+    /* ─── Workflow ─── */
+    .workflow-step {
+      display: flex; align-items: flex-start; gap: 20px;
+      padding: 24px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .workflow-step:last-child { border-bottom: none; }
+    .ws-num {
+      width: 44px; height: 44px; flex-shrink: 0;
+      border-radius: var(--radius-sm);
+      background: var(--navy);
+      color: var(--gold);
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ws-body h6 { font-size: .95rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .ws-body p { font-size: .83rem; color: var(--text-muted); margin: 0; }
+
+    /* ─── Security Section ─── */
+    .security-badge {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px;
+      background: var(--white);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      font-size: .875rem;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+    .security-badge i { color: var(--navy); font-size: 1.2rem; }
+
+    /* ─── CTA Section ─── */
+    #cta {
+      background: var(--navy);
+      position: relative;
+      overflow: hidden;
+    }
+    #cta::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(201,168,76,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,.05) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+    .cta-inner { position: relative; z-index: 1; text-align: center; padding: 96px 0; }
+    .cta-inner h2 { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: var(--white); margin-bottom: 16px; }
+    .cta-inner p { color: rgba(255,255,255,.6); font-size: 1.05rem; margin-bottom: 40px; }
+
+    /* ─── Testimonial ─── */
+    .testimonial-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 32px;
+      height: 100%;
+    }
+    .testimonial-card p { font-size: .9rem; color: var(--text-muted); font-style: italic; line-height: 1.75; margin-bottom: 20px; }
+    .tc-author { display: flex; align-items: center; gap: 12px; }
+    .tc-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800;
+      font-size: .9rem;
+    }
+    .tc-name { font-size: .85rem; font-weight: 700; color: var(--navy); }
+    .tc-role { font-size: .75rem; color: var(--text-muted); }
+    .stars { color: var(--gold); font-size: .8rem; margin-bottom: 12px; }
+
+    /* ─── Login Modal ─── */
+    .modal-content {
+      border: none;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .modal-header-custom {
+      background: var(--navy);
+      padding: 28px 32px 20px;
+      border-bottom: none;
+    }
+    .modal-header-custom h5 { color: var(--white); font-weight: 700; font-size: 1.15rem; }
+    .modal-header-custom p { color: var(--silver); font-size: .82rem; margin: 0; }
+    .modal-body { padding: 28px 32px; }
+    .form-label-custom { font-size: .8rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; letter-spacing: .03em; text-transform: uppercase; }
+    .form-control-custom {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .65rem 1rem;
+      font-size: .88rem;
+      color: var(--text-main);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .form-control-custom:focus {
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(11,29,58,.1);
+      outline: none;
+    }
+    .role-select-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .role-opt {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      font-size: .7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all .2s;
+    }
+    .role-opt:hover, .role-opt.selected {
+      border-color: var(--navy);
+      background: var(--surface);
+      color: var(--navy);
+    }
+    .role-opt i { display: block; font-size: 1.2rem; margin-bottom: 4px; }
+
+    /* ─── Footer ─── */
+    #footer { background: var(--navy); color: var(--silver); padding: 64px 0 0; }
+    .footer-brand { font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; color: var(--white); margin-bottom: 12px; }
+    .footer-desc { font-size: .82rem; line-height: 1.7; color: var(--silver); max-width: 260px; }
+    .footer-heading { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+    .footer-links { list-style: none; padding: 0; margin: 0; }
+    .footer-links li { margin-bottom: 8px; }
+    .footer-links a { color: var(--silver); font-size: .83rem; transition: color .2s; }
+    .footer-links a:hover { color: var(--gold); }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,.07);
+      margin-top: 48px;
+      padding: 20px 0;
+      font-size: .78rem;
+      color: rgba(255,255,255,.35);
+    }
+    .footer-bottom a { color: var(--gold); }
+    .social-btn {
+      width: 36px; height: 36px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--silver);
+      font-size: .9rem;
+      transition: border-color .2s, color .2s, background .2s;
+    }
+    .social-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(201,168,76,.1);
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 991px) {
+      .hero-stat-divider { display: none; }
+      .hero-visual { margin-top: 56px; }
+      .stat-divider { display: none; }
+    }
+    @media (max-width: 767px) {
+      .section-pad { padding: 64px 0; }
+      .hero-title { font-size: 2.2rem; }
+      .dp-grid { grid-template-columns: 1fr 1fr; }
+      .role-select-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 575px) {
+      .hero-stat-row { gap: 20px; }
+      .module-detail-card { padding: 20px; }
+      .modal-body { padding: 20px; }
+      .modal-header-custom { padding: 20px; }
+    }
+
+    /* ─── Scroll reveal ─── */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .55s ease, transform .55s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* Back to top */
+    #back-top {
+      position: fixed; bottom: 28px; right: 28px;
+      width: 44px; height: 44px;
+      background: var(--gold); color: var(--navy);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s, transform .3s;
+      z-index: 999;
+      border: none;
+      box-shadow: var(--shadow-md);
+    }
+    #back-top.show { opacity: 1; pointer-events: auto; }
+    #back-top:hover { transform: translateY(-3px); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ TOPBAR ══════════════ -->
+<div id="topbar">
+  <div class="container d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-telephone-fill me-1"></i> Support: <a href="tel:+2348000000000">+234 800 000 0000</a> &nbsp;|&nbsp; <i class="bi bi-envelope-fill me-1"></i><a href="mailto:support@dyconnect.com.ng">support@dyconnect.com.ng</a></span>
+    <span class="d-none d-sm-block"><i class="bi bi-clock me-1"></i> Mon – Fri, 8:00 AM – 5:00 PM WAT</span>
+  </div>
+</div>
+
+<!-- ══════════════ NAVBAR ══════════════ -->
+<nav id="mainNav" class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="#">
+      <div class="brand-icon">DY</div>
+      <div>
+        DY CONNECT
+        <span class="brand-sub">DY CONNECT RESOURCES LTD.</span>
+      </div>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav mx-auto gap-1">
+        <li class="nav-item"><a class="nav-link nav-link-custom" href="#features">Features</a></li>
+        <li class="nav-item"><a class="nav-link nav-link-custom" href="#modules">Modules</a></li>
+        <li class="nav-item"><a class="nav-link nav-link-custom" href="#workflow">How It Works</a></li>
+        <li class="nav-item"><a class="nav-link nav-link-custom" href="#roles">User Roles</a></li>
+        <li class="nav-item"><a class="nav-link nav-link-custom" href="#security">Security</a></li>
+        <li class="nav-item"><a class="nav-link nav-link-custom" href="#contact">Contact</a></li>
+      </ul>
+      <div class="d-flex gap-2 mt-3 mt-lg-0">
+        <button class="btn btn-outline-white" data-bs-toggle="modal" data-bs-target="#loginModal">
+          <i class="bi bi-person-circle me-1"></i> Sign In
+        </button>
+        <a href="/dashboard/" class="btn btn-gold">
+          <i class="bi bi-speedometer2 me-1"></i> Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════ HERO ══════════════ -->
+<section id="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-glow"></div>
+  <div class="container py-5">
+    <div class="row align-items-center gy-5">
+
+      <!-- Left -->
+      <div class="col-lg-6">
+        <div class="hero-tag">
+          <i class="bi bi-patch-check-fill"></i>
+          Enterprise-Grade
+        </div>
+        <h1 class="hero-title">
+          Manage Your <span class="accent">Workforce</span> With Precision & Control
+        </h1>
+        <p class="hero-desc">
+          DYCONNECT-App is a fully integrated Human Resource, Payroll &amp; Accounting platform built for manpower outsourcing companies — automating staff deployment, payroll processing, and financial reporting in one secure system.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <button class="btn btn-gold btn-lg px-4" data-bs-toggle="modal" data-bs-target="#loginModal">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Access the System
+          </button>
+          <a href="#features" class="btn btn-outline-white btn-lg px-4">
+            <i class="bi bi-play-circle me-2"></i>Explore Features
+          </a>
+        </div>
+        <div class="hero-stat-row">
+          <div class="hero-stat">
+            <div class="num">18+</div>
+            <div class="lbl">Core Modules</div>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <div class="num">9</div>
+            <div class="lbl">User Roles</div>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <div class="num">100%</div>
+            <div class="lbl">Audit Tracked</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Dashboard Preview -->
+      <div class="col-lg-6 hero-visual">
+        <div class="position-relative">
+          <div class="floating-badge fb-top">
+            <span class="ico text-success">✓</span>
+            <div><div style="font-size:.65rem;color:#888">PAYROLL STATUS</div>October 2025 — Processed</div>
+          </div>
+          <div class="dashboard-preview">
+            <div class="dp-header">
+              <div class="dp-dot" style="background:#FF5F57"></div>
+              <div class="dp-dot" style="background:#FEBC2E"></div>
+              <div class="dp-dot" style="background:#28C840"></div>
+              <span class="dp-title">DYCONNECT · Dashboard Overview</span>
+            </div>
+            <div class="dp-body">
+              <div class="dp-grid">
+                <div class="dp-card">
+                  <div class="val">1,248</div>
+                  <div class="lbl">Active Staff</div>
+                  <div class="delta">↑ 12 this month</div>
+                </div>
+                <div class="dp-card">
+                  <div class="val">43</div>
+                  <div class="lbl">Organizations</div>
+                  <div class="delta">↑ 2 new contracts</div>
+                </div>
+                <div class="dp-card">
+                  <div class="val">₦82.4M</div>
+                  <div class="lbl">Monthly Payroll</div>
+                  <div class="delta">Pending approval</div>
+                </div>
+                <div class="dp-card">
+                  <div class="val">17</div>
+                  <div class="lbl">Staff on Leave</div>
+                  <div class="delta">3 pending approval</div>
+                </div>
+              </div>
+              <div class="dp-bar-row">
+                <div class="dp-bar-item">
+                  <div class="dp-bar-label"><span>Payroll Processed</span><span>87%</span></div>
+                  <div class="dp-bar-track"><div class="dp-bar-fill" style="width:87%"></div></div>
+                </div>
+                <div class="dp-bar-item">
+                  <div class="dp-bar-label"><span>Loan Recovery</span><span>64%</span></div>
+                  <div class="dp-bar-track"><div class="dp-bar-fill green" style="width:64%"></div></div>
+                </div>
+                <div class="dp-bar-item">
+                  <div class="dp-bar-label"><span>Leave Utilization</span><span>41%</span></div>
+                  <div class="dp-bar-track"><div class="dp-bar-fill blue" style="width:41%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="floating-badge fb-bot">
+            <span class="ico">🔔</span>
+            <div><div style="font-size:.65rem;color:#888">NOTIFICATION</div>6 contract renewals due this week</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ STATS BANNER ══════════════ -->
+<section id="stats-banner">
+  <div class="container">
+    <div class="row text-center gy-4">
+      <div class="col-6 col-md-3">
+        <div class="stat-block">
+          <div class="num">18+</div>
+          <div class="desc">Integrated Modules</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-block">
+          <div class="num">100%</div>
+          <div class="desc">Audit Compliant</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-block">
+          <div class="num">PAYE</div>
+          <div class="desc">Tax Ready</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-block">
+          <div class="num">Zero</div>
+          <div class="desc">Data Loss Design</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ FEATURES ══════════════ -->
+<section id="features" class="section-pad bg-surface">
+  <div class="container">
+    <div class="text-center mb-5 reveal">
+      <span class="section-label">Platform Capabilities</span>
+      <h2 class="section-title mb-3">Everything Your HR Operation Needs</h2>
+      <p class="section-sub">Designed from the ground up for manpower outsourcing companies operating across multiple client organizations.</p>
+    </div>
+
+    <div class="row g-4">
+      <!-- Feature Cards -->
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-people-fill"></i></div>
+          <h5>Staff Management</h5>
+          <p>Complete employee lifecycle management — from onboarding to exit. Store biometrics, documents, bank details, BVN, NIN and deployment history.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-cash-stack"></i></div>
+          <h5>Payroll Processing</h5>
+          <p>Automated monthly payroll with configurable salary components, PAYE, Pension, NHF deductions, loan repayment, and multi-format export.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-building-check"></i></div>
+          <h5>Organization Management</h5>
+          <p>Manage multiple client organizations, contracts, contact persons and deployment of staff across different sites with ease.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-journal-bookmark-fill"></i></div>
+          <h5>Accounting & Ledger</h5>
+          <p>Full double-entry accounting: Chart of Accounts, Journal Entries, Trial Balance, Balance Sheet, Income Statement and Cash Flow reports.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-calendar2-check"></i></div>
+          <h5>Leave Management</h5>
+          <p>Configurable leave types with approval workflow, leave balance tracking, calendar view and policy enforcement across all staff categories.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-bank2"></i></div>
+          <h5>Staff Loans</h5>
+          <p>Complete loan lifecycle: application, approval, repayment schedules, automatic monthly deductions, outstanding balances and loan history.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-clock-history"></i></div>
+          <h5>Attendance Tracking</h5>
+          <p>Daily clock-in/out, late arrival penalties, overtime computation, absent tracking, holiday management and detailed attendance reports.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+          <h5>Document Management</h5>
+          <p>Centralised document vault for certificates, contracts, appointment letters, payslips, identity cards and all staff-related files.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="bi bi-graph-up-arrow"></i></div>
+          <h5>Reports & Analytics</h5>
+          <p>Comprehensive reporting across HR, Payroll, Loans, Accounting and Attendance — exportable as PDF, Excel and CSV with filter options.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ MODULES ══════════════ -->
+<section id="modules" class="section-pad">
+  <div class="container">
+    <div class="text-center mb-5 reveal">
+      <span class="section-label">System Architecture</span>
+      <h2 class="section-title mb-3">18 Fully Integrated Modules</h2>
+      <p class="section-sub">Each module is independently powerful, yet fully connected through a shared data layer and unified audit trail.</p>
+    </div>
+
+    <div class="module-tab-bar reveal" id="moduleTabs">
+      <button class="mod-tab active" data-module="hr">HR</button>
+      <button class="mod-tab" data-module="payroll">Payroll</button>
+      <button class="mod-tab" data-module="accounting">Accounting</button>
+      <button class="mod-tab" data-module="leave">Leave</button>
+      <button class="mod-tab" data-module="loan">Loans</button>
+      <button class="mod-tab" data-module="docs">Documents</button>
+      <button class="mod-tab" data-module="audit">Audit</button>
+      <button class="mod-tab" data-module="reports">Reports</button>
+    </div>
+
+    <!-- HR -->
+    <div class="module-panel active reveal" id="mod-hr">
+      <div class="module-detail-card">
+        <div class="row align-items-center mb-4">
+          <div class="col-auto"><div class="feature-icon" style="width:60px;height:60px;font-size:1.8rem;background:var(--navy);color:var(--gold)"><i class="bi bi-people-fill"></i></div></div>
+          <div class="col"><h4 class="section-title mb-1" style="font-size:1.5rem">Human Resources</h4><p class="text-muted mb-0" style="font-size:.875rem">Complete workforce management for outsourced staff deployment across client organizations.</p></div>
+        </div>
+        <ul class="mod-feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> Staff Profiles & Biometric IDs</li>
+          <li><i class="bi bi-check-circle-fill"></i> Employment History (Immutable)</li>
+          <li><i class="bi bi-check-circle-fill"></i> Promotion Management</li>
+          <li><i class="bi bi-check-circle-fill"></i> Suspension & Reinstatement</li>
+          <li><i class="bi bi-check-circle-fill"></i> Department & Branch Management</li>
+          <li><i class="bi bi-check-circle-fill"></i> Staff Deployment to Organizations</li>
+          <li><i class="bi bi-check-circle-fill"></i> Grade Level & Step Tracking</li>
+          <li><i class="bi bi-check-circle-fill"></i> Next of Kin & Emergency Contacts</li>
+          <li><i class="bi bi-check-circle-fill"></i> Bank Details & BVN / NIN</li>
+          <li><i class="bi bi-check-circle-fill"></i> Confirmation & Resignation Records</li>
+          <li><i class="bi bi-check-circle-fill"></i> Warning Letter Management</li>
+          <li><i class="bi bi-check-circle-fill"></i> Upcoming Birthday Alerts</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Payroll -->
+    <div class="module-panel reveal" id="mod-payroll">
+      <div class="module-detail-card">
+        <div class="row align-items-center mb-4">
+          <div class="col-auto"><div class="feature-icon" style="width:60px;height:60px;font-size:1.8rem;background:var(--navy);color:var(--gold)"><i class="bi bi-cash-stack"></i></div></div>
+          <div class="col"><h4 class="section-title mb-1" style="font-size:1.5rem">Payroll Management</h4><p class="text-muted mb-0" style="font-size:.875rem">Fully automated, locked, and immutable payroll processing with statutory deductions.</p></div>
+        </div>
+        <ul class="mod-feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> Monthly Payroll Generation</li>
+          <li><i class="bi bi-check-circle-fill"></i> Basic, Housing, Transport, Meal Allowance</li>
+          <li><i class="bi bi-check-circle-fill"></i> PAYE Tax Computation</li>
+          <li><i class="bi bi-check-circle-fill"></i> Pension (Employee & Employer)</li>
+          <li><i class="bi bi-check-circle-fill"></i> NHF Deductions</li>
+          <li><i class="bi bi-check-circle-fill"></i> Loan Repayment Deductions</li>
+          <li><i class="bi bi-check-circle-fill"></i> Payroll Approval Workflow</li>
+          <li><i class="bi bi-check-circle-fill"></i> Payroll Lock (No Edits After Lock)</li>
+          <li><i class="bi bi-check-circle-fill"></i> Salary Slip Generation (PDF)</li>
+          <li><i class="bi bi-check-circle-fill"></i> Payroll Register Export</li>
+          <li><i class="bi bi-check-circle-fill"></i> Bank Payment Schedule</li>
+          <li><i class="bi bi-check-circle-fill"></i> Net Salary & Gross Calculation</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Accounting -->
+    <div class="module-panel reveal" id="mod-accounting">
+      <div class="module-detail-card">
+        <div class="row align-items-center mb-4">
+          <div class="col-auto"><div class="feature-icon" style="width:60px;height:60px;font-size:1.8rem;background:var(--navy);color:var(--gold)"><i class="bi bi-journal-bookmark-fill"></i></div></div>
+          <div class="col"><h4 class="section-title mb-1" style="font-size:1.5rem">Accounting & Finance</h4><p class="text-muted mb-0" style="font-size:.875rem">Full double-entry accounting system with statutory financial reporting.</p></div>
+        </div>
+        <ul class="mod-feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> Chart of Accounts</li>
+          <li><i class="bi bi-check-circle-fill"></i> General Ledger</li>
+          <li><i class="bi bi-check-circle-fill"></i> Journal Entries</li>
+          <li><i class="bi bi-check-circle-fill"></i> Cash Book & Bank Book</li>
+          <li><i class="bi bi-check-circle-fill"></i> Income & Expense Tracking</li>
+          <li><i class="bi bi-check-circle-fill"></i> Payroll Expense Integration</li>
+          <li><i class="bi bi-check-circle-fill"></i> Loan Receivable Tracking</li>
+          <li><i class="bi bi-check-circle-fill"></i> Trial Balance</li>
+          <li><i class="bi bi-check-circle-fill"></i> Balance Sheet</li>
+          <li><i class="bi bi-check-circle-fill"></i> Income Statement (P&L)</li>
+          <li><i class="bi bi-check-circle-fill"></i> Cash Flow Statement</li>
+          <li><i class="bi bi-check-circle-fill"></i> Assets, Liabilities & Equity</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Leave -->
+    <div class="module-panel reveal" id="mod-leave">
+      <div class="module-detail-card">
+        <div class="row align-items-center mb-4">
+          <div class="col-auto"><div class="feature-icon" style="width:60px;height:60px;font-size:1.8rem;background:var(--navy);color:var(--gold)"><i class="bi bi-calendar2-check"></i></div></div>
+          <div class="col"><h4 class="section-title mb-1" style="font-size:1.5rem">Leave Management</h4><p class="text-muted mb-0" style="font-size:.875rem">End-to-end leave lifecycle with approval workflow, balance tracking and calendar views.</p></div>
+        </div>
+        <ul class="mod-feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> Annual Leave</li>
+          <li><i class="bi bi-check-circle-fill"></i> Study Leave</li>
+          <li><i class="bi bi-check-circle-fill"></i> Compassionate Leave</li>
+          <li><i class="bi bi-check-circle-fill"></i> Maternity & Paternity Leave</li>
+          <li><i class="bi bi-check-circle-fill"></i> Sick Leave</li>
+          <li><i class="bi bi-check-circle-fill"></i> Emergency Leave</li>
+          <li><i class="bi bi-check-circle-fill"></i> Leave Balance Tracking</li>
+          <li><i class="bi bi-check-circle-fill"></i> Approval Workflow</li>
+          <li><i class="bi bi-check-circle-fill"></i> Leave Calendar View</li>
+          <li><i class="bi bi-check-circle-fill"></i> Leave Reports</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Loans -->
+    <div class="module-panel reveal" id="mod-loan">
+      <div class="module-detail-card">
+        <div class="row align-items-center mb-4">
+          <div class="col-auto"><div class="feature-icon" style="width:60px;height:60px;font-size:1.8rem;background:var(--navy);color:var(--gold)"><i class="bi bi-bank2"></i></div></div>
+          <div class="col"><h4 class="section-title mb-1" style="font-size:1.5rem">Staff Loans</h4><p class="text-muted mb-0" style="font-size:.875rem">Structured loan management with automatic payroll integration and repayment tracking.</p></div>
+        </div>
+        <ul class="mod-feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> Loan Types & Configuration</li>
+          <li><i class="bi bi-check-circle-fill"></i> Loan Application & Approval</li>
+          <li><i class="bi bi-check-circle-fill"></i> Interest Computation</li>
+          <li><i class="bi bi-check-circle-fill"></i> Installment Schedule</li>
+          <li><i class="bi bi-check-circle-fill"></i> Outstanding Balance Tracking</li>
+          <li><i class="bi bi-check-circle-fill"></i> Auto Payroll Deduction</li>
+          <li><i class="bi bi-check-circle-fill"></i> Loan Status Dashboard</li>
+          <li><i class="bi bi-check-circle-fill"></i> Full Loan History</li>
+          <li><i class="bi bi-check-circle-fill"></i> Repayment Reports</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Documents -->
+    <div class="module-panel reveal" id="mod-docs">
+      <div class="module-detail-card">
+        <div class="row align-items-center mb-4">
+          <div class="col-auto"><div class="feature-icon" style="width:60px;height:60px;font-size:1.8rem;background:var(--navy);color:var(--gold)"><i class="bi bi-folder-fill"></i></div></div>
+          <div class="col"><h4 class="section-title mb-1" style="font-size:1.5rem">Document Management</h4><p class="text-muted mb-0" style="font-size:.875rem">Secure, organised document vault for all staff and company records.</p></div>
+        </div>
+        <ul class="mod-feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> Passport Photos</li>
+          <li><i class="bi bi-check-circle-fill"></i> Academic Certificates</li>
+          <li><i class="bi bi-check-circle-fill"></i> CVs & Resumes</li>
+          <li><i class="bi bi-check-circle-fill"></i> Appointment Letters</li>
+          <li><i class="bi bi-check-circle-fill"></i> Promotion Letters</li>
+          <li><i class="bi bi-check-circle-fill"></i> Warning Letters</li>
+          <li><i class="bi bi-check-circle-fill"></i> Medical Reports</li>
+          <li><i class="bi bi-check-circle-fill"></i> Staff Contracts</li>
+          <li><i class="bi bi-check-circle-fill"></i> Police Clearance</li>
+          <li><i class="bi bi-check-circle-fill"></i> Generated Payslips (PDF)</li>
+          <li><i class="bi bi-check-circle-fill"></i> Secure File Validation</li>
+          <li><i class="bi bi-check-circle-fill"></i> Per-Staff Document Vault</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Audit -->
+    <div class="module-panel reveal" id="mod-audit">
+      <div class="module-detail-card">
+        <div class="row align-items-center mb-4">
+          <div class="col-auto"><div class="feature-icon" style="width:60px;height:60px;font-size:1.8rem;background:var(--navy);color:var(--gold)"><i class="bi bi-shield-lock-fill"></i></div></div>
+          <div class="col"><h4 class="section-title mb-1" style="font-size:1.5rem">Audit Trail</h4><p class="text-muted mb-0" style="font-size:.875rem">Every action in the system is permanently recorded — tamper-proof and fully traceable.</p></div>
+        </div>
+        <ul class="mod-feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> User Attribution on Every Action</li>
+          <li><i class="bi bi-check-circle-fill"></i> Timestamp (Date & Time)</li>
+          <li><i class="bi bi-check-circle-fill"></i> IP Address Logging</li>
+          <li><i class="bi bi-check-circle-fill"></i> Old Value vs New Value</li>
+          <li><i class="bi bi-check-circle-fill"></i> Action Type Classification</li>
+          <li><i class="bi bi-check-circle-fill"></i> Module-Level Audit Filtering</li>
+          <li><i class="bi bi-check-circle-fill"></i> Audit Log Search</li>
+          <li><i class="bi bi-check-circle-fill"></i> Non-Deletable Records</li>
+          <li><i class="bi bi-check-circle-fill"></i> Auditor Role Access</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Reports -->
+    <div class="module-panel reveal" id="mod-reports">
+      <div class="module-detail-card">
+        <div class="row align-items-center mb-4">
+          <div class="col-auto"><div class="feature-icon" style="width:60px;height:60px;font-size:1.8rem;background:var(--navy);color:var(--gold)"><i class="bi bi-graph-up-arrow"></i></div></div>
+          <div class="col"><h4 class="section-title mb-1" style="font-size:1.5rem">Reports & Exports</h4><p class="text-muted mb-0" style="font-size:.875rem">Multi-format, filterable, print-ready reports across every module in the system.</p></div>
+        </div>
+        <ul class="mod-feature-list">
+          <li><i class="bi bi-check-circle-fill"></i> Staff Reports</li>
+          <li><i class="bi bi-check-circle-fill"></i> Payroll Reports</li>
+          <li><i class="bi bi-check-circle-fill"></i> Organization Reports</li>
+          <li><i class="bi bi-check-circle-fill"></i> Leave Reports</li>
+          <li><i class="bi bi-check-circle-fill"></i> Loan & Recovery Reports</li>
+          <li><i class="bi bi-check-circle-fill"></i> Tax (PAYE) Reports</li>
+          <li><i class="bi bi-check-circle-fill"></i> Attendance Reports</li>
+          <li><i class="bi bi-check-circle-fill"></i> Accounting Reports</li>
+          <li><i class="bi bi-check-circle-fill"></i> Export PDF</li>
+          <li><i class="bi bi-check-circle-fill"></i> Export Excel (.xlsx)</li>
+          <li><i class="bi bi-check-circle-fill"></i> Export CSV</li>
+          <li><i class="bi bi-check-circle-fill"></i> A4 Print-Ready Layout</li>
+        </ul>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+</section>
+
+<!-- ══════════════ WORKFLOW ══════════════ -->
+<section id="workflow" class="section-pad bg-surface">
+  <div class="container">
+    <div class="row gy-5 align-items-start">
+      <div class="col-lg-5 reveal">
+        <span class="section-label">Operational Flow</span>
+        <h2 class="section-title mb-4">From Staff Onboarding to Payroll in Minutes</h2>
+        <p class="text-muted mb-4">DYCONNECT enforces a structured workflow that ensures data integrity, approval gates, and permanent audit history at every stage.</p>
+        <a href="/staff/add/" class="btn btn-navy">
+          <i class="bi bi-person-plus me-2"></i>Start Onboarding a Staff
+        </a>
+      </div>
+      <div class="col-lg-7 reveal">
+        <div class="workflow-step">
+          <div class="ws-num">01</div>
+          <div class="ws-body">
+            <h6>Onboard Staff & Assign to Organization</h6>
+            <p>Create a staff profile, upload documents, set grade level, bank details and deploy to a client organization or branch.</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="ws-num">02</div>
+          <div class="ws-body">
+            <h6>Configure Salary Structure</h6>
+            <p>Define basic salary, allowances, and active deductions (PAYE, Pension, NHF, Loan, Cooperative, etc.) per staff record.</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="ws-num">03</div>
+          <div class="ws-body">
+            <h6>Capture Attendance & Leave</h6>
+            <p>Record daily attendance, late arrivals, approved leave and overtime. All feed automatically into payroll computation.</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="ws-num">04</div>
+          <div class="ws-body">
+            <h6>Generate & Approve Payroll</h6>
+            <p>Run monthly payroll — system computes gross, all deductions and net salary. HR Manager reviews and approves before locking.</p>
+          </div>
+        </div>
+        <div class="workflow-step">
+          <div class="ws-num">05</div>
+          <div class="ws-body">
+            <h6>Lock, Export & Archive</h6>
+            <p>Payroll is locked (no further edits), salary slips are auto-generated, and the run becomes permanent historical data.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ USER ROLES ══════════════ -->
+<section id="roles" class="section-pad bg-navy">
+  <div class="container">
+    <div class="text-center mb-5 reveal">
+      <span class="section-label" style="color:var(--gold-light)">Access Control</span>
+      <h2 class="section-title mb-3" style="color:var(--white)">9 Defined User Roles</h2>
+      <p class="section-sub" style="color:var(--silver)">Every user sees only what their role permits. Role-Based Access Control is enforced at every view, form and API endpoint.</p>
+    </div>
+    <div class="row g-3">
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="role-card">
+          <div class="ri"><i class="bi bi-shield-fill-check"></i></div>
+          <h5>System Administrator</h5>
+          <p>Full access to all modules, user management, system configuration and audit logs.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="role-card">
+          <div class="ri"><i class="bi bi-person-badge-fill"></i></div>
+          <h5>HR Manager</h5>
+          <p>Manages staff profiles, promotions, suspensions, leave approvals and employment history.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="role-card">
+          <div class="ri"><i class="bi bi-calculator-fill"></i></div>
+          <h5>Accountant</h5>
+          <p>Full access to accounting, general ledger, financial statements and payroll expense integration.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="role-card">
+          <div class="ri"><i class="bi bi-cash-coin"></i></div>
+          <h5>Payroll Officer</h5>
+          <p>Creates and processes monthly payroll runs, manages deductions and exports salary schedules.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="role-card">
+          <div class="ri"><i class="bi bi-building"></i></div>
+          <h5>Branch Manager</h5>
+          <p>Oversees staff within their branch, approves leave, tracks attendance and views branch reports.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="role-card">
+          <div class="ri"><i class="bi bi-person-workspace"></i></div>
+          <h5>Supervisor</h5>
+          <p>Manages team attendance, submits leave requests and monitors deployment records.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="role-card">
+          <div class="ri"><i class="bi bi-buildings-fill"></i></div>
+          <h5>Client Organization</h5>
+          <p>Views deployed staff list, contract status and receives relevant notifications for their site.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="role-card">
+          <div class="ri"><i class="bi bi-person-circle"></i></div>
+          <h5>Staff (Employee)</h5>
+          <p>Views personal profile, payslips, leave balance, loan status and submits leave applications.</p>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4 reveal">
+        <div class="role-card">
+          <div class="ri"><i class="bi bi-search"></i></div>
+          <h5>Auditor</h5>
+          <p>Read-only access to audit trails, financial reports, payroll history and compliance records.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ SECURITY ══════════════ -->
+<section id="security" class="section-pad">
+  <div class="container">
+    <div class="row align-items-center gy-5">
+      <div class="col-lg-5 reveal">
+        <span class="section-label">Enterprise Security</span>
+        <h2 class="section-title mb-4">Built Secure From the Foundation Up</h2>
+        <p class="text-muted mb-4" style="font-size:.92rem;line-height:1.8">
+          DYCONNECT-App follows industry security best practices, with additional layers of protection for sensitive payroll, financial, and personnel data. No shortcuts. No hardcoded secrets. No raw DATABASE.
+        </p>
+        <div class="d-flex flex-column gap-3">
+          <div class="security-badge"><i class="bi bi-lock-fill"></i> Login Required on every protected view</div>
+          <div class="security-badge"><i class="bi bi-person-check-fill"></i> Permission checks enforced at view level</div>
+          <div class="security-badge"><i class="bi bi-shield-exclamation"></i> CSRF protection on all forms</div>
+          <div class="security-badge"><i class="bi bi-database-lock"></i> Best ORM — zero raw DATA</div>
+          <div class="security-badge"><i class="bi bi-file-earmark-lock2-fill"></i> Secure file upload with type validation</div>
+          <div class="security-badge"><i class="bi bi-key-fill"></i> Secrets via environment variables</div>
+        </div>
+      </div>
+      <div class="col-lg-7 reveal">
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="feature-card text-center p-4">
+              <div class="feature-icon mx-auto mb-3" style="font-size:1.8rem;width:64px;height:64px"><i class="bi bi-shield-lock-fill"></i></div>
+              <h6 class="fw-700 mb-2">Role-Based Access</h6>
+              <p style="font-size:.8rem">Granular permissions ensure each user can only access their designated functions.</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="feature-card text-center p-4">
+              <div class="feature-icon mx-auto mb-3" style="font-size:1.8rem;width:64px;height:64px"><i class="bi bi-journal-x"></i></div>
+              <h6 class="fw-700 mb-2">Immutable Records</h6>
+              <p style="font-size:.8rem">Payroll history, employment events, and audit logs can never be deleted or overwritten.</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="feature-card text-center p-4">
+              <div class="feature-icon mx-auto mb-3" style="font-size:1.8rem;width:64px;height:64px"><i class="bi bi-eye-slash-fill"></i></div>
+              <h6 class="fw-700 mb-2">Soft Delete</h6>
+              <p style="font-size:.8rem">Records are never hard-deleted. Deactivation preserves full relational data integrity.</p>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="feature-card text-center p-4">
+              <div class="feature-icon mx-auto mb-3" style="font-size:1.8rem;width:64px;height:64px"><i class="bi bi-hash"></i></div>
+              <h6 class="fw-700 mb-2">Password Hashing</h6>
+              <p style="font-size:.8rem">All passwords are hashed using PBKDF2 algorithm. Never stored in plain text.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ TESTIMONIALS ══════════════ -->
+<section class="section-pad bg-surface">
+  <div class="container">
+    <div class="text-center mb-5 reveal">
+      <span class="section-label">From the Team</span>
+      <h2 class="section-title mb-3">Designed for Real-World Operations</h2>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4 reveal">
+        <div class="testimonial-card">
+          <div class="stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+          <p>"Running payroll for 800+ deployed staff across 30 organizations used to take days. With DYCONNECT, we generate, review, approve and lock payroll in under 3 hours."</p>
+          <div class="tc-author">
+            <div class="tc-avatar">AM</div>
+            <div><div class="tc-name">Amaka Musa</div><div class="tc-role">Payroll Officer, Outserve Ltd</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 reveal">
+        <div class="testimonial-card">
+          <div class="stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+          <p>"The audit trail module alone saved us during our external auditor's visit. Every change, who made it, when, and what the old value was — all there, instantly."</p>
+          <div class="tc-author">
+            <div class="tc-avatar">JO</div>
+            <div><div class="tc-name">James Okonkwo</div><div class="tc-role">Internal Auditor, Nexus Manpower</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 reveal">
+        <div class="testimonial-card">
+          <div class="stars"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+          <p>"Loan management was a nightmare in spreadsheets. Now every repayment is automatically deducted from payroll and the balance is always accurate, in real time."</p>
+          <div class="tc-author">
+            <div class="tc-avatar">BI</div>
+            <div><div class="tc-name">Blessing Ike</div><div class="tc-role">HR Manager, StaffPro Nigeria</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ CONTACT ══════════════ -->
+<section id="contact" class="section-pad">
+  <div class="container">
+    <div class="row gy-5 align-items-start">
+      <div class="col-lg-5 reveal">
+        <span class="section-label">Get In Touch</span>
+        <h2 class="section-title mb-4">We're Here to Help</h2>
+        <p class="text-muted mb-4" style="font-size:.92rem;line-height:1.8">
+          For onboarding support, system access requests, technical assistance, or feature inquiries — contact your system administrator or our support team.
+        </p>
+        <div class="d-flex flex-column gap-3">
+          <div class="security-badge"><i class="bi bi-telephone-fill text-navy"></i><div><div style="font-size:.7rem;color:var(--text-muted)">PHONE SUPPORT</div><strong>+234 800 000 0000</strong></div></div>
+          <div class="security-badge"><i class="bi bi-envelope-fill text-navy"></i><div><div style="font-size:.7rem;color:var(--text-muted)">EMAIL</div><strong>support@dyconnect.com.ng</strong></div></div>
+          <div class="security-badge"><i class="bi bi-geo-alt-fill text-navy"></i><div><div style="font-size:.7rem;color:var(--text-muted)">OFFICE</div><strong>Lagos, Nigeria</strong></div></div>
+          <div class="security-badge"><i class="bi bi-clock-fill text-navy"></i><div><div style="font-size:.7rem;color:var(--text-muted)">SUPPORT DYCONNECT</div><strong>Mon – Fri, 8:00 AM – 5:00 PM WAT</strong></div></div>
+        </div>
+      </div>
+      <div class="col-lg-7 reveal">
+        <div class="feature-card p-4">
+          <h5 class="mb-4">Send a Support Request</h5>
+          <div class="mb-3">
+            
+           <form action="contact.php" method="POST">
+                        <div class="mb-3">
+                            <input type="text" name="name" class="form-control" placeholder="Your Name" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="email" name="email" class="form-control" placeholder="Your Email" required>
+                        </div>
+                        <div class="mb-3">
+                            <textarea name="message" class="form-control" rows="5" placeholder="Message" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-dark w-100">Send Message</button>
+                    </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ CTA ══════════════ -->
+<section id="cta">
+  <div class="cta-inner container">
+    <span class="section-label" style="color:var(--gold-light)">Ready to Start?</span>
+    <h2>Your Workforce Data, <br>Finally Under Control</h2>
+    <p>Access the full DYCONNECT platform — HR, Payroll, Accounting, and more.<br class="d-none d-md-block"> Built for scale. Designed for people.</p>
+    <div class="d-flex flex-wrap justify-content-center gap-3">
+      <button class="btn btn-gold btn-lg px-5" data-bs-toggle="modal" data-bs-target="#loginModal">
+        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+      </button>
+      <a href="#features" class="btn btn-outline-white btn-lg px-5">
+        <i class="bi bi-eye me-2"></i>View All Features
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer id="footer">
+  <div class="container">
+    <div class="row gy-5">
+      <div class="col-lg-4">
+        <div class="footer-brand">
+          <span style="color:var(--gold)">DY</span>CONNECT
+        </div>
+        <p class="footer-desc">Enterprise Human Resource, Payroll &amp; Accounting Management System — purpose-built for manpower outsourcing organizations.</p>
+        <div class="d-flex gap-2 mt-4">
+          <a href="#" class="social-btn"><i class="bi bi-linkedin"></i></a>
+          <a href="#" class="social-btn"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" class="social-btn"><i class="bi bi-facebook"></i></a>
+          <a href="#" class="social-btn"><i class="bi bi-envelope"></i></a>
+        </div>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="footer-heading">Modules</div>
+        <ul class="footer-links">
+          <li><a href="/staff/">Staff Management</a></li>
+          <li><a href="/payroll/">Payroll</a></li>
+          <li><a href="/accounting/">Accounting</a></li>
+          <li><a href="/leave/">Leave</a></li>
+          <li><a href="/loan/">Loans</a></li>
+          <li><a href="/attendance/">Attendance</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="footer-heading">System</div>
+        <ul class="footer-links">
+          <li><a href="/dashboard/">Dashboard</a></li>
+          <li><a href="/reports/">Reports</a></li>
+          <li><a href="/documents/">Documents</a></li>
+          <li><a href="/audit/">Audit Trail</a></li>
+          <li><a href="/notifications/">Notifications</a></li>
+          <li><a href="/settings/">Settings</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="footer-heading">HR</div>
+        <ul class="footer-links">
+          <li><a href="/organizations/">Organizations</a></li>
+          <li><a href="/departments/">Departments</a></li>
+          <li><a href="/promotions/">Promotions</a></li>
+          <li><a href="/suspensions/">Suspensions</a></li>
+          <li><a href="/history/">Employment History</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <div class="footer-heading">Support</div>
+        <ul class="footer-links">
+          <li><a href="/accounts/login/">Login</a></li>
+          <li><a href="/accounts/password-reset/">Reset Password</a></li>
+          <li><a href="#contact">Contact Support</a></li>
+          <li><a href="/admin/">Admin Panel</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
+      <span>&copy; 2026 DYCONNECT. All rights reserved.</span>
+      <span>version 2.0 &nbsp;|&nbsp; <a href="#">FIZCOS INFOTECH</a></span>
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════════ LOGIN MODAL ══════════════ -->
+<div class="modal fade" id="loginModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header-custom">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h5 class="mb-1"><i class="bi bi-shield-lock-fill text-gold me-2"></i>DYCONNECT Sign In</h5>
+            <p>Select your role and enter your credentials to access the system.</p>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">I am logging in as:</p>
+        <div class="role-select-grid" id="roleGrid">
+          <div class="role-opt selected" data-role="hr"><i class="bi bi-person-badge-fill"></i>HR Staff</div>
+          <div class="role-opt" data-role="payroll"><i class="bi bi-cash-coin"></i>Payroll</div>
+          <div class="role-opt" data-role="accountant"><i class="bi bi-calculator"></i>Accountant</div>
+          <div class="role-opt" data-role="admin"><i class="bi bi-shield-fill-check"></i>Admin</div>
+          <div class="role-opt" data-role="staff"><i class="bi bi-person-circle"></i>Staff</div>
+          <div class="role-opt" data-role="auditor"><i class="bi bi-search"></i>Auditor</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label-custom">Username or Email</label>
+          <input type="text" class="form-control form-control-custom" placeholder="Enter your username" id="loginUsername" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label-custom">Password</label>
+          <div class="input-group">
+            <input type="password" class="form-control form-control-custom" placeholder="Enter your password" id="loginPassword" style="border-right:none" />
+            <button class="btn border" style="border-left:none;border-color:var(--border)" onclick="togglePwd()">
+              <i class="bi bi-eye" id="eyeIcon"></i>
+            </button>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="rememberMe" />
+            <label class="form-check-label" for="rememberMe" style="font-size:.8rem">Remember me</label>
+          </div>
+          <a href="/accounts/password-reset/" style="font-size:.8rem;color:var(--navy);font-weight:600">Forgot password?</a>
+        </div>
+        <a href="/accounts/login/" class="btn btn-navy w-100 mb-3">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+        </a>
+        <div class="text-center" style="font-size:.78rem;color:var(--text-muted)">
+          Having trouble signing in? <a href="#contact" data-bs-dismiss="modal" style="color:var(--navy);font-weight:600">Contact Support</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Back to Top -->
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <i class="bi bi-chevron-up"></i>
+</button>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  /* ── Navbar scroll shadow ── */
+  const nav = document.getElementById('mainNav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+    document.getElementById('back-top').classList.toggle('show', window.scrollY > 400);
+  });
+
+  /* ── Module Tabs ── */
+  document.querySelectorAll('.mod-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mod-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.module-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('mod-' + btn.dataset.module).classList.add('active');
+    });
+  });
+
+  /* ── Role selector in modal ── */
+  document.querySelectorAll('.role-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.role-opt').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+    });
+  });
+
+  /* ── Toggle password visibility ── */
+  function togglePwd() {
+    const inp = document.getElementById('loginPassword');
+    const ico = document.getElementById('eyeIcon');
+    if (inp.type === 'password') { inp.type = 'text'; ico.className = 'bi bi-eye-slash'; }
+    else { inp.type = 'password'; ico.className = 'bi bi-eye'; }
+  }
+
+  /* ── Scroll reveal ── */
+  const revealEls = document.querySelectorAll('.reveal');
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => revealObs.observe(el));
+
+  /* ── Active nav link on scroll ── */
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-link-custom');
+  const sectionObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.nav-link-custom[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.4 });
+  sections.forEach(s => sectionObs.observe(s));
+</script>
+
+</body>
+</html>

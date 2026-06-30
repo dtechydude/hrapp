@@ -1,0 +1,19 @@
+{# templates/home.html #}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome</title>
+</head>
+<body>
+    <h1>Welcome to the School Portal!</h1>
+    <p><a href="#">Login</a></p>
+    {% if user.is_authenticated %}
+        {% if user.teacher %}
+            <p><a href="#">Go to Report Cards (Teacher)</a></p>
+        {% elif user.student %}
+            <p><a href="#">Go to Student Dashboard</a></p>
+        {% endif %}
+        <p><a href="#">Logout</a></p>
+    {% endif %}
+</body>
+</html>
