@@ -1,154 +1,132 @@
-from django.db import models
-from django.urls import reverse
+import uuid
+
 from django.contrib.auth.models import User
+from django.db import models
+
 from users.utils import generate_ref_code
+from employees.core.choices import NigerianState
+
+
+class UserType(models.TextChoices):
+    ADMIN = "Admin", "Administrator"
+    HR = "HR", "Human Resource"
+    PAYROLL = "Payroll", "Payroll Officer"
+    ACCOUNTANT = "Accountant", "Accountant"
+    STAFF = "Staff", "Staff"
+    CLIENT = "Client", "Client"
+    SUPERVISOR = "Supervisor", "Supervisor"
+    AUDITOR = "Auditor", "Auditor"
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    image = models.ImageField(default='default.jpg', upload_to='profile_pics', verbose_name='Profile Pic', blank=True, null=True,)
-    phone = models.CharField(max_length=11, blank=True)
 
-    select = 'Select'
-    abia = 'Abia'
-    adamawa = 'Adamawa'
-    akwa_ibom = 'Akwa_Ibom'
-    anambra = 'Anambra'
-    bauchi = 'Bauchi'
-    bayelsa = 'Bayelsa'
-    benue = 'Benue'
-    borno = 'Borno'
-    cross_river = 'Cross_river'
-    delta = 'Delta'
-    ebonyi = 'Ebonyi'
-    edo = 'Edo'
-    ekiti = 'Ekiti'
-    enugu = 'Enugu'
-    fct_abuja = 'Fct_abuja'
-    gombe = 'Gombe'
-    imo = 'Imo'
-    jigawa = 'Jigawa'
-    kaduna = 'Kaduna'
-    kano = 'Kano'
-    katsina = 'Katsina'
-    kebbi = 'Kebbi'
-    kogi = 'Kogi'
-    kwara = 'Kwara'
-    lagos = 'Lagos'
-    nasarawa = 'Nasarawa'
-    niger = 'Niger'
-    ogun = 'Ogun'
-    ondo = 'Ondo'
-    osun = 'Osun'
-    oyo = 'Oyo'
-    plateau = 'Plateau'
-    rivers = 'Rivers'
-    sokoto = 'Sokoto'
-    taraba = 'Taraba'
-    yobe = 'Yobe'
-    zamfara = 'Zamfara'
-    
-    states = [
-        ('Select', select),
-        ('Abia', abia),
-        ('Adamawa', adamawa),
-        ('Akwa_ibom', akwa_ibom),
-        ('Anambra', anambra),
-        ('Bauchi', bauchi),
-        ('Bayelsa', bayelsa),
-        ('Benue', benue),
-        ('Borno', borno),
-        ('Cross_river', cross_river),
-        ('Delta', delta),
-        ('Ebonyi', ebonyi),
-        ('Edo', edo),
-        ('Ekiti', ekiti),
-        ('Enugu', enugu),
-        ('Fct_abuja', fct_abuja),
-        ('Gombe', gombe),
-        ('Imo', imo),
-        ('Jigawa', jigawa),
-        ('Kaduna', kaduna),
-        ('Katsina', katsina),
-        ('Kebbi', kebbi),
-        ('Kogi', kogi),
-        ('Kwara', kwara),
-        ('Lagos', lagos),
-        ('Nasarawa', nasarawa),
-        ('Niger', niger),
-        ('Ogun', ogun),
-        ('Ondo', ondo),
-        ('Osun', osun),
-        ('Oyo', oyo),
-        ('Plateau', plateau),
-        ('Rivers', rivers),
-        ('Sokoto', sokoto),
-        ('Taraba', taraba),
-        ('Yobe', yobe),
-        ('Zamfara', zamfara),
-        
-    ]
-    state_of_origin = models.CharField(max_length=15, choices=states, default=select)
-    address = models.CharField(max_length=150, blank=True, null=True)
-    bio = models.TextField(max_length=150, blank=True)
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
 
-    select = 'select'
-    teacher = 'teacher'
-    student = 'student'
-    admin = 'admin'   
-    other_staff = 'other_staff'    
-    parent = 'parent'  
-       
- 
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
 
-    user_types = [
-        (select, 'select'),
-        (student, 'student'),
-        (teacher, 'teacher'),
-        (admin, 'admin'),
-        (other_staff, 'other_staff'),        
-        (parent, 'parent'),                   
-             
-    ]
+    image = models.ImageField(
+        upload_to="profile_pics",
+        default="default.jpg",
+        blank=True,
+        null=True,
+        verbose_name="Profile Picture",
+    )
 
-    user_type = models.CharField(max_length=20, choices=user_types, default=select, blank=True, null=True)
-    code = models.CharField(max_length=6, blank=True) 
-    recommended_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True,  related_name='ref_by' )
-    activate = models.BooleanField(default=False, blank=True, verbose_name='active')   
-    updated = models.DateTimeField(auto_now=True)
-    created = models.DateTimeField(auto_now_add=True)
-    
-   
+    phone = models.CharField(
+        max_length=20,
+        blank=True,
+    )
+
+    state_of_origin = models.CharField(
+        max_length=30,
+        choices=NigerianState.choices,
+        default=NigerianState.SELECT,
+    )
+
+    address = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
+    bio = models.TextField(
+        blank=True,
+    )
+
+    user_type = models.CharField(
+        max_length=20,
+        choices=UserType.choices,
+        default=UserType.STAFF,
+    )
+
+    referral_code = models.CharField(
+        max_length=10,
+        blank=True,
+        unique=True,
+    )
+
+    recommended_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recommended_profiles",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+    )
+
+    created = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated = models.DateTimeField(
+        auto_now=True,
+    )
+
     class Meta:
-        ordering = ['user']
-        verbose_name = 'User Profiles'
-        verbose_name_plural = 'User Profiles'
+        ordering = (
+            "user__last_name",
+            "user__first_name",
+        )
 
-#this function returns the profile name in the admin panel profile table
-    def __str__ (self):
-        return f'username:- {self.user.username} - {self.user.last_name} - {self.user.first_name}'
-    
-    def get_recommended_profiles(self):
-        qs = Profile.objects.all()
-        # my_recs = [p for p in qs if p.recommended_by == self.user]
-        my_recs = []
-        for profile in qs:
-            if profile.recommended_by == self.user:
-                my_recs.append(profile)
-        return my_recs
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
 
+    def __str__(self):
 
-    
-    def save(self, *args, **kwargs):
-        if self.code =="":
-            code = generate_ref_code()
-            self.code = code
-        super().save(*args, **kwargs)
+        return self.full_name
 
-   
+    @property
+    def full_name(self):
+
+        return self.user.get_full_name() or self.user.username
+
     @property
     def image_url(self):
+
         if self.image:
             return self.image.url
-        return '/static/pages/images/default.jpg'
 
+        return "/static/pages/images/default.jpg"
+
+    def get_recommended_profiles(self):
+
+        return Profile.objects.filter(
+            recommended_by=self.user
+        )
+
+    def save(self, *args, **kwargs):
+
+        if not self.referral_code:
+            self.referral_code = generate_ref_code()
+
+        super().save(*args, **kwargs)

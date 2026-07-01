@@ -14,6 +14,8 @@ urlpatterns = [
     path('', include('dashboard.urls', namespace='dashboard')),
     path('users/', include('users.urls')),
     path('employees/', include('employees.urls', namespace='employees')), 
+    path('organization/', include('organization.urls', namespace='organization')), 
+
    
        
     # Add this line below to fix the NoReverseMatch error

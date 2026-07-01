@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'employees.apps.EmployeesConfig',
     'dashboard.apps.DashboardConfig',
+    'organization.apps.OrganizationConfig',
     
 
     

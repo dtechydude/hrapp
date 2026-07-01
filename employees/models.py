@@ -1,261 +1,308 @@
-from django.db import models
-import math
-from django.core.validators import MinValueValidator, MaxValueValidator
+import uuid
+
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save, post_delete
-from datetime import timedelta
-from django.template.defaultfilters import slugify
-from users.models import Profile
-from datetime import datetime
-from django.utils import timezone
 from django.db import models
 from django.utils import timezone
-from django.contrib.auth.models import User
-from datetime import datetime
+
+from employees.core.choices import NigerianState
+
+from organization.models import StaffRank
 
 
-
-    
-# # Staff Module
-# class Organization(models.Model):
-#     name = models.CharField(max_length=100, unique=True)
-#     description = models.TextField(max_length=200, blank=True)
-#     slug = models.SlugField(null=True, blank=True, help_text='Do not enter anything here')
-
-#     def __str__(self):
-#         return self.name
-
-#     def save(self, *args, **kwargs):
-#         self.slug = slugify(self.name)
-#         super().save(*args, **kwargs)
-
-#     class Meta:
-#         verbose_name = 'Organization '
-#         verbose_name_plural = 'Organization'
+class Gender(models.TextChoices):
+    MALE = "Male", "Male"
+    FEMALE = "Female", "Female"
 
 
-class Department(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(max_length=200, blank=True)
-    slug = models.SlugField(null=True, blank=True, help_text='Do not enter anything here')
-
-    def __str__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
-
-    class Meta:
-        verbose_name = 'Employee Rank'
-        verbose_name_plural = 'Employee Rank'
+class MaritalStatus(models.TextChoices):
+    SINGLE = "Single", "Single"
+    MARRIED = "Married", "Married"
+    DIVORCED = "Divorced", "Divorced"
+    WIDOWED = "Widowed", "Widowed"
 
 
-class StaffRole(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(max_length=200, blank=True)
-    slug = models.SlugField(null=True, blank=True, help_text='Do not enter anything here')
-
-    def __str__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
-
-    class Meta:
-        verbose_name = 'Employee Role'
-        verbose_name_plural = 'Employee Role'
+class EmploymentType(models.TextChoices):
+    PERMANENT = "Permanent", "Permanent"
+    CONTRACT = "Contract", "Contract"
+    TEMPORARY = "Temporary", "Temporary"
+    CASUAL = "Casual", "Casual"
+    INTERN = "Intern", "Intern"
+    NYSC = "NYSC", "NYSC"
+    PROBATION = "Probation", "Probation"
 
 
-class StaffRank(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    description = models.TextField(max_length=200, blank=True)
-    slug = models.SlugField(null=True, blank=True, help_text='Do not enter anything here')
-
-    def __str__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
-
-    class Meta:
-        verbose_name = 'Employee Rank'
-        verbose_name_plural = 'Employee Rank'
+class EmploymentStatus(models.TextChoices):
+    ACTIVE = "Active", "Active"
+    ON_LEAVE = "On Leave", "On Leave"
+    SUSPENDED = "Suspended", "Suspended"
+    RESIGNED = "Resigned", "Resigned"
+    TERMINATED = "Terminated", "Terminated"
+    RETIRED = "Retired", "Retired"
 
 
-
-
-# Staff Module
 class Staff(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True)
-    first_name = models.CharField(max_length=20, blank=True, null=True)
-    middle_name = models.CharField(max_length=20, blank=True, null=True)
-    last_name = models.CharField(max_length=20, blank=True, null=True)
-    
-    female = 'female'
-    male = 'male'
-    select_gender = 'select_gender'
+    """
+    Core Employee Record.
 
-    gender_type = [
-        ('female', female),
-        ('male', male),
-        ('select_gender', select_gender),
-    ]
+    Company assignment, department, role and branch
+    are maintained through the StaffDeployment model.
+    Payroll, leave, attendance, documents and loans
+    are handled by their respective apps.
+    """
 
-    gender= models.CharField(max_length=20, choices=gender_type, default= select_gender)
-    DOB = models.DateField(default='1998-01-01')
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="staff_profile",
+    )
 
-    select = 'Select'
-    abia = 'Abia'
-    adamawa = 'Adamawa'
-    akwa_ibom = 'Akwa_Ibom'
-    anambra = 'Anambra'
-    bauchi = 'Bauchi'
-    bayelsa = 'Bayelsa'
-    benue = 'Benue'
-    borno = 'Borno'
-    cross_river = 'Cross_river'
-    delta = 'Delta'
-    ebonyi = 'Ebonyi'
-    edo = 'Edo'
-    ekiti = 'Ekiti'
-    enugu = 'Enugu'
-    fct_abuja = 'Fct_abuja'
-    gombe = 'Gombe'
-    imo = 'Imo'
-    jigawa = 'Jigawa'
-    kaduna = 'Kaduna'
-    kano = 'Kano'
-    katsina = 'Katsina'
-    kebbi = 'Kebbi'
-    kogi = 'Kogi'
-    kwara = 'Kwara'
-    lagos = 'Lagos'
-    nasarawa = 'Nasarawa'
-    niger = 'Niger'
-    ogun = 'Ogun'
-    ondo = 'Ondo'
-    osun = 'Osun'
-    oyo = 'Oyo'
-    plateau = 'Plateau'
-    rivers = 'Rivers'
-    sokoto = 'Sokoto'
-    taraba = 'Taraba'
-    yobe = 'Yobe'
-    zamfara = 'Zamfara'
-    
-    states = [
-        ('Select', select),
-        ('Abia', abia),
-        ('Adamawa', adamawa),
-        ('Akwa_ibom', akwa_ibom),
-        ('Anambra', anambra),
-        ('Bauchi', bauchi),
-        ('Bayelsa', bayelsa),
-        ('Benue', benue),
-        ('Borno', borno),
-        ('Cross_river', cross_river),
-        ('Delta', delta),
-        ('Ebonyi', ebonyi),
-        ('Edo', edo),
-        ('Ekiti', ekiti),
-        ('Enugu', enugu),
-        ('Fct_abuja', fct_abuja),
-        ('Gombe', gombe),
-        ('Imo', imo),
-        ('Jigawa', jigawa),
-        ('Kaduna', kaduna),
-        ('Katsina', katsina),
-        ('Kebbi', kebbi),
-        ('Kogi', kogi),
-        ('Kwara', kwara),
-        ('Lagos', lagos),
-        ('Nasarawa', nasarawa),
-        ('Niger', niger),
-        ('Ogun', ogun),
-        ('Ondo', ondo),
-        ('Osun', osun),
-        ('Oyo', oyo),
-        ('Plateau', plateau),
-        ('Rivers', rivers),
-        ('Sokoto', sokoto),
-        ('Taraba', taraba),
-        ('Yobe', yobe),
-        ('Zamfara', zamfara),
-        
-    ]
-    
-    state_of_origin = models.CharField(max_length=15, choices=states, default=select)    
-    
-    married = 'married'
-    single = 'single'
-    select = 'select'
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
 
-    marital_status = [
-        (married, 'married'),
-        (single, 'single'),
-        (select, 'select'),
-    ]
+    employee_no = models.CharField(
+        max_length=20,
+        unique=True,
+        db_index=True,
+        blank=True,
+        help_text="Automatically generated employee number",
+    )
 
-    marital_status = models.CharField(max_length=15, choices=marital_status, default=select)
+    middle_name = models.CharField(
+        max_length=50,
+        blank=True,
+    )
 
-    # Employment Info
-    staff_rank = models.ForeignKey(StaffRank, on_delete=models.CASCADE, default=1, related_name='my_dept', blank=True, null=True)
-    organization_assigned = models.ManyToManyField(Organization, related_name='employees')
-    role_assigned = models.ManyToManyField(StaffRole, blank=True, related_name='employees')
-    dept_assigned = models.ManyToManyField(Department, blank=True, related_name='employees')    
-    date_employed = models.DateField(default='1998-01-01')
+    gender = models.CharField(
+        max_length=10,
+        choices=Gender.choices,
+        default=Gender.MALE,
+    )
 
-    # Personal Contact Info
-    phone_home = models.CharField(max_length=11, null=True, blank=True)
-    phone_mobile = models.CharField(max_length=11, null=True, blank=True)
-    address_line1 = models.CharField(max_length=150, blank=True, null=True)
-    address_line1 = models.CharField(max_length=150, blank=True, null=True)    
-    
+    date_of_birth = models.DateField()
 
-    # Academic information
-    qualification = models.CharField(max_length=150, default='OND')
-    year = models.DateField(default='1998-01-01')
-    institution = models.CharField(max_length=150, blank=True)
-    professional_body = models.CharField(max_length=150, blank=True)
+    state_of_origin = models.CharField(
+    max_length=30,
+    choices=NigerianState.choices,
+    default=NigerianState.SELECT,
+)
+    nationality = models.CharField(
+        max_length=50,
+        default="Nigeria",
+    )
 
-    # Guarantor's information
-    guarantor_name = models.CharField(max_length=150, blank=True)
-    guarantor_phone = models.CharField(max_length=15, blank=True)
-    guarantor_address = models.CharField(max_length=150, blank=True)
-    guarantor_email = models.CharField(max_length=60, blank=True)
+    marital_status = models.CharField(
+        max_length=20,
+        choices=MaritalStatus.choices,
+        default=MaritalStatus.SINGLE,
+    )
 
-    # next of kin info
-    next_of_kin_name = models.CharField(max_length=60, blank=True)
-    next_of_kin_address = models.CharField(max_length=150, blank=True)
-    next_of_kin_phone = models.CharField(max_length=15, blank=True)
+    employment_type = models.CharField(
+        max_length=20,
+        choices=EmploymentType.choices,
+        default=EmploymentType.PERMANENT,
+    )
 
-    updated = models.DateTimeField(auto_now=True)
-    created = models.DateTimeField(auto_now_add=True)
-    active = models.BooleanField(default=False, blank=True)
+    employment_status = models.CharField(
+        max_length=20,
+        choices=EmploymentStatus.choices,
+        default=EmploymentStatus.ACTIVE,
+    )
 
+    staff_rank = models.ForeignKey(
+        StaffRank,
+        on_delete=models.PROTECT,
+        related_name="employees",
+        blank=True,
+        null=True,
+    )
 
-    def __str__(self):
-        return f'{self.first_name} - {self.last_name}'
+    date_employed = models.DateField()
 
+    confirmation_date = models.DateField(
+        blank=True,
+        null=True,
+    )
 
-    def get_full_name(self):
+    phone_mobile = models.CharField(
+        max_length=20,
+        blank=True,
+    )
 
-        names = [self.user.last_name, self.user.first_name, self.middle_name]
-        full_name = " ".join(filter(None, names))
-        return full_name.strip()
+    phone_home = models.CharField(
+        max_length=20,
+        blank=True,
+    )
 
+    official_email = models.EmailField(
+        blank=True,
+    )
+
+    personal_email = models.EmailField(
+        blank=True,
+    )
+
+    address = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
+    qualification = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    graduation_year = models.PositiveSmallIntegerField(
+        blank=True,
+        null=True,
+    )
+
+    institution = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    professional_body = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    guarantor_name = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    guarantor_phone = models.CharField(
+        max_length=20,
+        blank=True,
+    )
+
+    guarantor_email = models.EmailField(
+        blank=True,
+    )
+
+    guarantor_address = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
+    next_of_kin_name = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    next_of_kin_phone = models.CharField(
+        max_length=20,
+        blank=True,
+    )
+
+    next_of_kin_address = models.CharField(
+        max_length=255,
+        blank=True,
+    )
+
+    notes = models.TextField(
+        blank=True,
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+    )
+
+    created = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    updated = models.DateTimeField(
+        auto_now=True,
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="staff_created",
+        null=True,
+        blank=True,
+    )
+
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name="staff_updated",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
-        ordering = ['last_name']
+        ordering = (
+            "user__last_name",
+            "user__first_name",
+        )
+        verbose_name = "Staff"
+        verbose_name_plural = "Staff"
 
-        verbose_name = 'Staff Details'
-        verbose_name_plural = 'Staff Details'
+        indexes = [
+            models.Index(fields=["employee_no"]),
+            models.Index(fields=["employment_status"]),
+            models.Index(fields=["date_employed"]),
+        ]
 
+    def __str__(self):
+        return f"{self.employee_no} - {self.user.get_full_name()}"
 
+    def save(self, *args, **kwargs):
+        if not self.employee_no:
+            last = Staff.objects.order_by("-id").first()
+            number = 1 if last is None else last.id + 1
+            self.employee_no = f"EMP{number:05d}"
 
+        super().save(*args, **kwargs)
+
+    @property
+    def full_name(self):
+        return " ".join(
+            filter(
+                None,
+                [
+                    self.user.last_name,
+                    self.user.first_name,
+                    self.middle_name,
+                ],
+            )
+        )
+
+    @property
+    def age(self):
+        today = timezone.localdate()
+        return (
+            today.year
+            - self.date_of_birth.year
+            - (
+                (today.month, today.day)
+                < (
+                    self.date_of_birth.month,
+                    self.date_of_birth.day,
+                )
+            )
+        )
+
+    @property
+    def current_deployment(self):
+        """
+        Returns the employee's active deployment.
+        """
+        return (
+            self.deployments.select_related(
+                "company",
+                "department",
+                "branch",
+                "role",
+            )
+            .filter(is_current=True)
+            .first()
+        )
 # Staff Attendance
 
 class StaffAttendance(models.Model):
