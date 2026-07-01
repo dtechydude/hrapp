@@ -47,8 +47,8 @@ class Department(models.Model):
         super().save(*args, **kwargs)
 
     class Meta:
-        verbose_name = 'Employee Rank'
-        verbose_name_plural = 'Employee Rank'
+        verbose_name = 'Department'
+        verbose_name_plural = 'Departments'
 
 
 
