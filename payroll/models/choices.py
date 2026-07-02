@@ -65,19 +65,19 @@ class ComponentCalculation(models.TextChoices):
     SYSTEM = "System", "Calculated by System"
     
 
-class PaymentMethod(models.TextChoices):
-    BANK_TRANSFER = "Bank Transfer", "Bank Transfer"
-    CASH = "Cash", "Cash"
-    CHEQUE = "Cheque", "Cheque"
-    MOBILE_MONEY = "Mobile Money", "Mobile Money"
+# class PaymentMethod(models.TextChoices):
+#     BANK_TRANSFER = "Bank Transfer", "Bank Transfer"
+#     CASH = "Cash", "Cash"
+#     CHEQUE = "Cheque", "Cheque"
+#     MOBILE_MONEY = "Mobile Money", "Mobile Money"
 
 
-class PaymentStatus(models.TextChoices):
-    PENDING = "Pending", "Pending"
-    PROCESSING = "Processing", "Processing"
-    SUCCESSFUL = "Successful", "Successful"
-    FAILED = "Failed", "Failed"
-    REVERSED = "Reversed", "Reversed"
+# class PaymentStatus(models.TextChoices):
+#     PENDING = "Pending", "Pending"
+#     PROCESSING = "Processing", "Processing"
+#     SUCCESSFUL = "Successful", "Successful"
+#     FAILED = "Failed", "Failed"
+#     REVERSED = "Reversed", "Reversed"
 
 
 class DeductionType(models.TextChoices):
@@ -107,3 +107,51 @@ class AllowanceType(models.TextChoices):
     SHIFT = "Shift", "Shift Allowance"
     HAZARD = "Hazard", "Hazard Allowance"
     OTHER = "Other", "Other"
+
+
+
+
+
+class PaymentMethod(models.TextChoices):
+    BANK_TRANSFER = "BANK_TRANSFER", "Bank Transfer"
+    CASH = "CASH", "Cash"
+    CHEQUE = "CHEQUE", "Cheque"
+    MOBILE_MONEY = "MOBILE_MONEY", "Mobile Money"
+    POS = "POS", "POS"
+    OTHER = "OTHER", "Other"
+
+
+class PaymentStatus(models.TextChoices):
+    PENDING = "PENDING", "Pending"
+    PROCESSING = "PROCESSING", "Processing"
+    PAID = "PAID", "Paid"
+    FAILED = "FAILED", "Failed"
+    REVERSED = "REVERSED", "Reversed"
+    CANCELLED = "CANCELLED", "Cancelled"
+
+
+class PaymentChannel(models.TextChoices):
+    MANUAL = "MANUAL", "Manual Payment"
+    BANK_API = "BANK_API", "Bank API"
+    BULK_UPLOAD = "BULK_UPLOAD", "Bulk Upload"
+    IMPORT = "IMPORT", "Imported"
+
+
+class PaymentBatchStatus(models.TextChoices):
+    OPEN = "OPEN", "Open"
+    PROCESSING = "PROCESSING", "Processing"
+    COMPLETED = "COMPLETED", "Completed"
+    CANCELLED = "CANCELLED", "Cancelled"
+
+
+class ApprovalLevel(models.TextChoices):
+    PAYROLL_OFFICER = "PAYROLL_OFFICER", "Payroll Officer"
+    HR_MANAGER = "HR_MANAGER", "HR Manager"
+    FINANCE_MANAGER = "FINANCE_MANAGER", "Finance Manager"
+    MANAGING_DIRECTOR = "MANAGING_DIRECTOR", "Managing Director"
+
+
+class ApprovalStatus(models.TextChoices):
+    PENDING = "PENDING", "Pending"
+    APPROVED = "APPROVED", "Approved"
+    REJECTED = "REJECTED", "Rejected"

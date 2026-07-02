@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import Staff, StaffAttendance, Organization, Department, StaffRole, StaffRank
+from .models import Staff, StaffAttendance
 from django.utils import timezone
 
 
@@ -26,46 +26,22 @@ class CustomUserCreationForm(UserCreationForm):
             raise ValidationError("This username is already taken. Please choose another.")
         return username
 
-class StaffForm(forms.ModelForm):
-    # Add first_name and last_name fields to the form
-    first_name = forms.CharField(max_length=150, required=True, label='First Name',
-        widget=forms.TextInput(attrs={'placeholder': 'Enter First Name'}))
-    last_name = forms.CharField(max_length=150, required=True, label='Last Name',
-        widget=forms.TextInput(attrs={'placeholder': 'Enter Last Name'}))
-    middle_name = forms.CharField(max_length=150, required=False, label='Middle Name',
-        widget=forms.TextInput(attrs={'placeholder': 'Enter Middle Name'}))
 
-    organization_assigned = forms.ModelMultipleChoiceField(
-        queryset=Organization.objects.all().order_by('name'),
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-    )
 
-    staff_role = forms.ModelMultipleChoiceField(
-        queryset=StaffRole.objects.all().order_by('name'),
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-    )
-    
+class StaffUserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'username', 'email']
+
+class StaffProfileForm(forms.ModelForm):
     class Meta:
         model = Staff
-        fields = [
-            'first_name', 'middle_name', 'last_name', 'gender', 'marital_status', 
-            'phone_home', 'DOB', 'date_employed', 'staff_role', 'dept_assigned', 
-            'standards_assigned', 'subjects_taught', 'qualification', 'year', 
-            'institution', 'professional_body', 'guarantor_name', 'guarantor_phone', 
-            'guarantor_address', 'guarantor_email', 'next_of_kin_name', 
-            'next_of_kin_address', 'next_of_kin_phone',
-        ]
-        
+        exclude = ['user', 'created_by', 'updated_by', 'is_active', 'uuid', 'employee_no']
         widgets = {
-            'DOB': forms.DateInput(attrs={'type': 'date'}),
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
             'date_employed': forms.DateInput(attrs={'type': 'date'}),
-            'guarantor_address': forms.Textarea(attrs={'rows': 2}),
-            'next_of_kin_address': forms.Textarea(attrs={'rows': 2}),
+            'confirmation_date': forms.DateInput(attrs={'type': 'date'}),
         }
-
-
 # Staff Attendance
 
 class AttendanceDateForm(forms.Form):

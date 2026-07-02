@@ -106,6 +106,23 @@ class SalaryComponent(models.Model):
         help_text="Used when calculation method is Percentage.",
     )
 
+    percentage_of = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="dependent_components",
+        help_text="Component used as the base for percentage calculation."
+    )
+
+    apply_on_gross = models.BooleanField(
+        default=False
+    )
+
+    allow_negative = models.BooleanField(
+        default=False
+    )
+
     is_taxable = models.BooleanField(
         default=False,
     )
