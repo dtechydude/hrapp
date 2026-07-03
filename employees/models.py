@@ -297,8 +297,8 @@ class Staff(models.Model):
             self.deployments.select_related(
                 "company",
                 "department",
-                "branch",
-                "role",
+                # "rank",
+                "designation",
             )
             .filter(is_current=True)
             .first()

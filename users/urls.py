@@ -5,7 +5,7 @@ from users import views as user_views
 from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
 from .views import SafePasswordResetView
-# from .views import BulkPhotoUploadView, ajax_load_users
+from .views import BulkPhotoUploadView, ajax_load_users
 
 
 # app_name ='users'
@@ -29,17 +29,17 @@ urlpatterns = [
     path('logout/', user_views.user_logout, name='logout'),
     path('logout-success/', user_views.logout_success, name='logout_success'),
 
-    # # Bulk Picture Upload
-    # path(
-    #     'bulk-photos/',
-    #     BulkPhotoUploadView.as_view(),
-    #     name='bulk-photo-upload',
-    # ),
-    # path(
-    #     'bulk-photos/load-users/',
-    #     ajax_load_users,
-    #     name='bulk-photo-load-users',
-    # ),
+    # Bulk Picture Upload
+    path(
+        'bulk-photos/',
+        BulkPhotoUploadView.as_view(),
+        name='bulk-photo-upload',
+    ),
+    path(
+        'bulk-photos/load-users/',
+        ajax_load_users,
+        name='bulk-photo-load-users',
+    ),
     path(
         'password-reset/',
         SafePasswordResetView.as_view(),

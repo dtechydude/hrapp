@@ -380,7 +380,7 @@ KwikSchools — Smarter Schools!
 
 logger = logging.getLogger(__name__)
 
-VALID_USER_TYPES = ('student', 'teacher', 'parent', 'all')
+VALID_USER_TYPES = ('staff', 'all')
 
 
 def _is_staff(user):

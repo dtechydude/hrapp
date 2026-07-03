@@ -1,4 +1,789 @@
-{% extends 'dashboard/base.html' %}
+
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}{% if is_create %}Add New Staff{% else %}Edit — {{ staff.full_name }}{% endif %}{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'employees:employee-list' %}" style="color:inherit">Staff Management</a>
+  <i class="bi bi-chevron-right"></i>
+  <span class="bc-current">{% if is_create %}Add New Staff{% else %}Edit Staff{% endif %}</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Tab navigation ── */
+.form-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 0;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+}
+.form-tabs::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 12px 18px;
+  font-size: .82rem; font-weight: 600;
+  color: var(--text-muted);
+  border: none; background: none; cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+  position: relative;
+}
+.tab-btn:hover { color: var(--navy); }
+.tab-btn.active {
+  color: var(--navy);
+  border-bottom-color: var(--navy);
+}
+.tab-btn .tab-badge {
+  width: 7px; height: 7px;
+  background: var(--red); border-radius: 50%;
+  position: absolute; top: 8px; right: 8px;
+  display: none;
+}
+.tab-btn.has-error .tab-badge { display: block; }
+
+.tab-panel { display: none; padding: 28px; }
+.tab-panel.active { display: block; }
+
+/* ── Form section titles ── */
+.form-section-title {
+  font-family: var(--font-display);
+  font-size: .82rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.form-section-title i { color: var(--navy); }
+
+/* ── Grid inside tabs ── */
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px 20px; }
+.form-grid-1 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.col-span-2  { grid-column: span 2; }
+.col-span-3  { grid-column: span 3; }
+@media (max-width: 767px) {
+  .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+  .col-span-2, .col-span-3   { grid-column: span 1; }
+}
+
+/* ── Password strength meter ── */
+.pwd-strength { height: 4px; border-radius: 2px; background: var(--border); margin-top: 6px; overflow: hidden; }
+.pwd-strength-fill { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
+
+/* ── Summary sidebar ── */
+.form-summary {
+  background: var(--navy);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  position: sticky; top: 20px;
+}
+.form-summary-avatar {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: var(--gold-muted); border: 2px solid var(--gold-border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; color: var(--gold);
+  margin: 0 auto 16px;
+}
+.form-summary-name {
+  font-family: var(--font-display); font-size: 1rem; font-weight: 700;
+  color: #fff; text-align: center; margin-bottom: 4px;
+}
+.form-summary-id { font-size: .75rem; color: var(--text-muted); text-align: center; margin-bottom: 20px; }
+.summary-field { margin-bottom: 12px; }
+.summary-field .sf-label { font-size: .67rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; }
+.summary-field .sf-val   { font-size: .8rem; color: #fff; }
+
+/* ── Form actions bar ── */
+.form-actions {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 28px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  gap: 12px; flex-wrap: wrap;
+}
+.form-actions-right { display: flex; gap: 10px; }
+
+/* ── Steps indicator ── */
+.steps-row {
+  display: flex; align-items: center; gap: 0;
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  overflow-x: auto;
+}
+.step-pill {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .76rem; font-weight: 600; color: var(--text-muted);
+  white-space: nowrap;
+}
+.step-pill .sn {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid var(--border-2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .65rem; font-weight: 700;
+  transition: all .2s;
+}
+.step-pill.active { color: var(--navy); }
+.step-pill.active .sn { background: var(--navy); color: #fff; border-color: var(--navy); }
+.step-pill.done .sn  { background: var(--green); color: #fff; border-color: var(--green); }
+.step-arrow { margin: 0 8px; color: var(--border-2); font-size: .7rem; flex-shrink: 0; }
+
+/* ── Error summary ── */
+.error-summary {
+  background: var(--red-bg); border: 1px solid rgba(239,68,68,.25);
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 20px;
+}
+.error-summary-title { font-size: .82rem; font-weight: 700; color: var(--red); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.error-summary ul { list-style: none; padding: 0; }
+.error-summary ul li { font-size: .78rem; color: var(--red); padding: 2px 0; display: flex; align-items: center; gap: 6px; }
+.error-summary ul li::before { content: '→'; }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <div>
+    <div class="page-title">
+      {% if is_create %}
+        <i class="bi bi-person-plus-fill" style="color:var(--gold);font-size:1.1rem"></i>
+        Register New Staff Member
+      {% else %}
+        <i class="bi bi-pencil-square" style="color:var(--gold);font-size:1.1rem"></i>
+        Edit — {{ staff.full_name }}
+      {% endif %}
+    </div>
+    <div class="page-subtitle">
+      {% if is_create %}
+        Complete all required fields across the four sections below.
+      {% else %}
+        Employee No: <strong>{{ staff.employee_no }}</strong>
+        &nbsp;·&nbsp; Last updated: {{ staff.updated|date:"d M Y, H:i" }}
+      {% endif %}
+    </div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'staff:list' %}" class="btn btn-outline">
+      <i class="bi bi-arrow-left"></i> Cancel
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+{# ── Collect all form errors for summary display ── #}
+{% with all_errors=user_form.errors|dictsort:"0" %}
+{% if user_form.errors or profile_form.errors %}
+<div class="error-summary section-mb">
+  <div class="error-summary-title">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    Please fix the following errors before saving
+  </div>
+  <ul>
+    {% for field in user_form %}
+      {% for error in field.errors %}
+        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+      {% endfor %}
+    {% endfor %}
+    {% for error in user_form.non_field_errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    {% for field in profile_form %}
+      {% for error in field.errors %}
+        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+      {% endfor %}
+    {% endfor %}
+    {% for error in profile_form.non_field_errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endwith %}
+
+<div style="display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start">
+
+  {# ══════════ MAIN FORM CARD ══════════ #}
+  <div class="card section-mb">
+
+    {# Steps indicator #}
+    <div class="steps-row">
+      <div class="step-pill active" id="step-1" data-tab="0">
+        <div class="sn">1</div> Account &amp; Identity
+      </div>
+      <i class="bi bi-chevron-right step-arrow"></i>
+      <div class="step-pill" id="step-2" data-tab="1">
+        <div class="sn">2</div> Employment
+      </div>
+      <i class="bi bi-chevron-right step-arrow"></i>
+      <div class="step-pill" id="step-3" data-tab="2">
+        <div class="sn">3</div> Education
+      </div>
+      <i class="bi bi-chevron-right step-arrow"></i>
+      <div class="step-pill" id="step-4" data-tab="3">
+        <div class="sn">4</div> Next of Kin
+      </div>
+    </div>
+
+    {# Tab navigation #}
+    <div class="form-tabs" id="formTabs">
+      <button type="button" class="tab-btn active" data-target="tab-account">
+        <i class="bi bi-person-fill"></i> Account &amp; Personal
+        <span class="tab-badge"></span>
+      </button>
+      <button type="button" class="tab-btn" data-target="tab-employment">
+        <i class="bi bi-briefcase-fill"></i> Employment
+        <span class="tab-badge"></span>
+      </button>
+      <button type="button" class="tab-btn" data-target="tab-education">
+        <i class="bi bi-mortarboard-fill"></i> Education
+        <span class="tab-badge"></span>
+      </button>
+      <button type="button" class="tab-btn" data-target="tab-kin">
+        <i class="bi bi-people-fill"></i> Next of Kin &amp; Guarantor
+        <span class="tab-badge"></span>
+      </button>
+    </div>
+
+    {% comment %} {# ─────────────────────────────────────────────────
+       THE FORM — single <form> wrapping all tabs
+    ───────────────────────────────────────────────── #} {% endcomment %}
+    <form method="post" id="staffForm" novalidate>
+      {% csrf_token %}
+
+      {# ══ TAB 1: Account & Personal ══ #}
+      <div class="tab-panel active" id="tab-account">
+
+        {# User Account #}
+        <div class="form-section-title">
+          <i class="bi bi-shield-lock-fill"></i> Login Account Details
+        </div>
+        <div class="form-grid-2" style="margin-bottom:28px">
+          <div class="form-group">
+            <label class="form-label">First Name <span style="color:var(--red)">*</span></label>
+            {{ user_form.first_name }}
+            {% if user_form.first_name.errors %}<div class="form-error"><i class="bi bi-exclamation-circle"></i>{{ user_form.first_name.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name <span style="color:var(--red)">*</span></label>
+            {{ user_form.last_name }}
+            {% if user_form.last_name.errors %}<div class="form-error"><i class="bi bi-exclamation-circle"></i>{{ user_form.last_name.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username <span style="color:var(--red)">*</span></label>
+            {{ user_form.username }}
+            <div class="form-hint">Used to log in to the portal. Auto-suggested from name.</div>
+            {% if user_form.username.errors %}<div class="form-error"><i class="bi bi-exclamation-circle"></i>{{ user_form.username.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Login Email</label>
+            {{ user_form.email }}
+            {% if user_form.email.errors %}<div class="form-error"><i class="bi bi-exclamation-circle"></i>{{ user_form.email.errors.0 }}</div>{% endif %}
+          </div>
+
+          {% if is_create %}
+          <div class="form-group">
+            <label class="form-label">Password <span style="color:var(--red)">*</span></label>
+            <div style="position:relative">
+              {{ user_form.password }}
+              <button type="button" id="togglePwd1"
+                style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+            <div class="pwd-strength"><div class="pwd-strength-fill" id="pwdStrengthFill" style="width:0"></div></div>
+            <div class="form-hint" id="pwdHint">Minimum 8 characters with mixed case &amp; numbers.</div>
+            {% if user_form.password.errors %}<div class="form-error"><i class="bi bi-exclamation-circle"></i>{{ user_form.password.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password <span style="color:var(--red)">*</span></label>
+            <div style="position:relative">
+              {{ user_form.confirm_password }}
+              <button type="button" id="togglePwd2"
+                style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+            {% if user_form.confirm_password.errors %}<div class="form-error"><i class="bi bi-exclamation-circle"></i>{{ user_form.confirm_password.errors.0 }}</div>{% endif %}
+          </div>
+          {% else %}
+          {# On edit: collapsible password reset section #}
+          <div class="col-span-2">
+            <details style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px">
+              <summary style="cursor:pointer;font-size:.82rem;font-weight:600;color:var(--navy);list-style:none">
+                <i class="bi bi-lock-fill"></i> Reset Password (optional)
+              </summary>
+              <div class="form-grid-2" style="margin-top:16px">
+                <div class="form-group">
+                  <label class="form-label">New Password</label>
+                  {{ user_form.password }}
+                  {% if user_form.password.errors %}<div class="form-error">{{ user_form.password.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Confirm New Password</label>
+                  {{ user_form.confirm_password }}
+                  {% if user_form.confirm_password.errors %}<div class="form-error">{{ user_form.confirm_password.errors.0 }}</div>{% endif %}
+                </div>
+              </div>
+            </details>
+          </div>
+          {% endif %}
+        </div>
+
+        {# Personal Information #}
+        <div class="form-section-title">
+          <i class="bi bi-person-vcard-fill"></i> Personal Information
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Middle Name</label>
+            {{ profile_form.middle_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gender <span style="color:var(--red)">*</span></label>
+            {{ profile_form.gender }}
+            {% if profile_form.gender.errors %}<div class="form-error"><i class="bi bi-exclamation-circle"></i>{{ profile_form.gender.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Marital Status</label>
+            {{ profile_form.marital_status }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date of Birth <span style="color:var(--red)">*</span></label>
+            {{ profile_form.date_of_birth }}
+            {% if profile_form.date_of_birth.errors %}<div class="form-error"><i class="bi bi-exclamation-circle"></i>{{ profile_form.date_of_birth.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">State of Origin <span style="color:var(--red)">*</span></label>
+            {{ profile_form.state_of_origin }}
+            {% if profile_form.state_of_origin.errors %}<div class="form-error"><i class="bi bi-exclamation-circle"></i>{{ profile_form.state_of_origin.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nationality</label>
+            {{ profile_form.nationality }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mobile Phone <span style="color:var(--red)">*</span></label>
+            {{ profile_form.phone_mobile }}
+            {% if profile_form.phone_mobile.errors %}<div class="form-error"><i class="bi bi-exclamation-circle"></i>{{ profile_form.phone_mobile.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Home Phone</label>
+            {{ profile_form.phone_home }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Personal Email</label>
+            {{ profile_form.personal_email }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Official Email</label>
+            {{ profile_form.official_email }}
+          </div>
+          <div class="form-group col-span-3">
+            <label class="form-label">Residential Address</label>
+            {{ profile_form.address }}
+          </div>
+        </div>
+
+      </div>{# /tab-account #}
+
+      {# ══ TAB 2: Employment ══ #}
+      <div class="tab-panel" id="tab-employment">
+        <div class="form-section-title">
+          <i class="bi bi-briefcase-fill"></i> Employment Details
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Employment Type <span style="color:var(--red)">*</span></label>
+            {{ profile_form.employment_type }}
+            {% if profile_form.employment_type.errors %}<div class="form-error">{{ profile_form.employment_type.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Employment Status <span style="color:var(--red)">*</span></label>
+            {{ profile_form.employment_status }}
+            {% if profile_form.employment_status.errors %}<div class="form-error">{{ profile_form.employment_status.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Staff Rank / Grade</label>
+            {{ profile_form.staff_rank }}
+            {% if profile_form.staff_rank.errors %}<div class="form-error">{{ profile_form.staff_rank.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date Employed <span style="color:var(--red)">*</span></label>
+            {{ profile_form.date_employed }}
+            {% if profile_form.date_employed.errors %}<div class="form-error">{{ profile_form.date_employed.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirmation Date</label>
+            {{ profile_form.confirmation_date }}
+            <div class="form-hint">Leave blank if still on probation.</div>
+            {% if profile_form.confirmation_date.errors %}<div class="form-error">{{ profile_form.confirmation_date.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group col-span-3">
+            <label class="form-label">Internal Notes</label>
+            {{ profile_form.notes }}
+            <div class="form-hint">Visible only to HR managers and administrators.</div>
+          </div>
+        </div>
+
+        {# Info box #}
+        <div style="display:flex;align-items:flex-start;gap:10px;background:var(--blue-bg);border:1px solid rgba(59,130,246,.2);border-radius:var(--radius-sm);padding:14px 16px;margin-top:16px;font-size:.8rem;color:var(--blue)">
+          <i class="bi bi-info-circle-fill" style="flex-shrink:0;margin-top:1px"></i>
+          <div>
+            The <strong>Employee Number</strong> is generated automatically on save (e.g. EMP00123).
+            Staff deployment to a specific organization, department and branch is managed separately
+            via the <strong>Deployment</strong> module after registration.
+          </div>
+        </div>
+      </div>{# /tab-employment #}
+
+      {# ══ TAB 3: Education ══ #}
+      <div class="tab-panel" id="tab-education">
+        <div class="form-section-title">
+          <i class="bi bi-mortarboard-fill"></i> Education &amp; Qualifications
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Highest Qualification</label>
+            {{ profile_form.qualification }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Institution / School</label>
+            {{ profile_form.institution }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Graduation Year</label>
+            {{ profile_form.graduation_year }}
+            {% if profile_form.graduation_year.errors %}<div class="form-error">{{ profile_form.graduation_year.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Professional Body / Membership</label>
+            {{ profile_form.professional_body }}
+            <div class="form-hint">e.g. ICAN, NSE, NIM, CIPM</div>
+          </div>
+        </div>
+      </div>{# /tab-education #}
+
+      {# ══ TAB 4: Next of Kin & Guarantor ══ #}
+      <div class="tab-panel" id="tab-kin">
+        <div class="form-section-title">
+          <i class="bi bi-person-heart"></i> Next of Kin
+        </div>
+        <div class="form-grid-3" style="margin-bottom:28px">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            {{ profile_form.next_of_kin_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            {{ profile_form.next_of_kin_phone }}
+          </div>
+          <div class="form-group col-span-3">
+            <label class="form-label">Address</label>
+            {{ profile_form.next_of_kin_address }}
+          </div>
+        </div>
+
+        <div class="form-section-title">
+          <i class="bi bi-patch-check-fill"></i> Guarantor Information
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Guarantor Full Name</label>
+            {{ profile_form.guarantor_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Guarantor Phone</label>
+            {{ profile_form.guarantor_phone }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Guarantor Email</label>
+            {{ profile_form.guarantor_email }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Guarantor Address</label>
+            {{ profile_form.guarantor_address }}
+          </div>
+        </div>
+      </div>{# /tab-kin #}
+
+      {# ─── Form Actions ─── #}
+      <div class="form-actions">
+        <div style="font-size:.78rem;color:var(--text-muted)">
+          <i class="bi bi-asterisk" style="color:var(--red);font-size:.6rem;vertical-align:super"></i>
+          Required fields must be completed before saving.
+        </div>
+        <div class="form-actions-right">
+          <a href="{% url 'employees:employee-list' %}" class="btn btn-outline">
+            <i class="bi bi-x-lg"></i> Cancel
+          </a>
+          <button type="submit" class="btn btn-gold" id="saveBtn">
+            <i class="bi bi-check2-circle"></i>
+            {% if is_create %}Register Staff Member{% else %}Save Changes{% endif %}
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>{# /card #}
+
+  {# ══════════ SIDEBAR SUMMARY ══════════ #}
+  <div>
+    <div class="form-summary">
+      <div class="form-summary-avatar" id="summaryAvatar">?</div>
+      <div class="form-summary-name" id="summaryName">
+        {% if is_create %}New Staff Member{% else %}{{ staff.full_name }}{% endif %}
+      </div>
+      <div class="form-summary-id">
+        {% if not is_create %}{{ staff.employee_no }}{% else %}EMP# auto-generated{% endif %}
+      </div>
+
+      <div style="border-top:1px solid rgba(255,255,255,.08);margin:16px 0;padding-top:16px">
+        {% if not is_create %}
+        <div class="summary-field">
+          <div class="sf-label">Status</div>
+          <div class="sf-val">
+            <span class="pill {% if staff.employment_status == 'Active' %}active{% elif staff.employment_status == 'Suspended' %}suspended{% else %}pending{% endif %}">
+              {{ staff.employment_status }}
+            </span>
+          </div>
+        </div>
+        <div class="summary-field">
+          <div class="sf-label">Date Employed</div>
+          <div class="sf-val">{{ staff.date_employed|date:"d M Y" }}</div>
+        </div>
+        <div class="summary-field">
+          <div class="sf-label">Employment Type</div>
+          <div class="sf-val">{{ staff.employment_type }}</div>
+        </div>
+        <div class="summary-field">
+          <div class="sf-label">Staff Rank</div>
+          <div class="sf-val">{{ staff.staff_rank|default:"Not assigned" }}</div>
+        </div>
+        <div class="summary-field">
+          <div class="sf-label">Registered By</div>
+          <div class="sf-val">{{ staff.created_by.get_full_name|default:"System" }}</div>
+        </div>
+        {% else %}
+        <div style="font-size:.78rem;color:rgba(255,255,255,.45);text-align:center;line-height:1.7">
+          The summary panel will populate as you fill in the form below.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Required fields checklist #}
+    <div class="card" style="margin-top:16px">
+      <div class="card-header">
+        <div class="card-title" style="font-size:.78rem">
+          <i class="bi bi-list-check"></i> Required Fields
+        </div>
+      </div>
+      <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+        {% comment %} {% for label in "First Name,Last Name,Username,Gender,Date of Birth,State of Origin,Mobile Phone,Employment Type,Employment Status,Date Employed"|split:"," %} {% endcomment %}
+        {% for label in required_fields %}
+        <div style="display:flex;align-items:center;gap:8px;font-size:.76rem;color:var(--text-secondary)">
+          <i class="bi bi-circle" style="color:var(--border-2);font-size:.6rem"></i>
+          {{ label }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if not is_create and request.user.is_superuser %}
+    <div class="card" style="margin-top:16px;border-color:rgba(239,68,68,.3)">
+      <div class="card-header" style="background:var(--red-bg)">
+        <div class="card-title" style="font-size:.78rem;color:var(--red)">
+          <i class="bi bi-exclamation-triangle-fill"></i> Danger Zone
+        </div>
+      </div>
+      <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+        <form method="post" action="{% url 'staff:toggle_status' uuid=staff.uuid %}"
+              onsubmit="return confirm('Are you sure you want to {% if staff.employment_status == 'Active' %}suspend{% else %}reinstate{% endif %} this staff member?')">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline btn-sm w-full"
+                  style="color:var(--amber);border-color:var(--amber)">
+            <i class="bi bi-{% if staff.employment_status == 'Active' %}pause-circle{% else %}play-circle{% endif %}"></i>
+            {% if staff.employment_status == 'Active' %}Suspend Staff{% else %}Reinstate Staff{% endif %}
+          </button>
+        </form>
+        <form method="post" action="{% url 'staff:deactivate' uuid=staff.uuid %}"
+              onsubmit="return confirm('This will permanently deactivate this staff account and revoke login access. This cannot be undone from the portal. Continue?')">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline btn-sm w-full"
+                  style="color:var(--red);border-color:var(--red);margin-top:6px">
+            <i class="bi bi-person-dash-fill"></i> Deactivate Account
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>{# /sidebar #}
+
+</div>{# /grid #}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── Tab switching ── */
+const tabs   = document.querySelectorAll('.tab-btn');
+const panels = document.querySelectorAll('.tab-panel');
+
+function switchTab(targetId) {
+  tabs.forEach(t   => t.classList.toggle('active', t.dataset.target === targetId));
+  panels.forEach(p => p.classList.toggle('active', p.id === targetId));
+  // Update step indicators
+  const tabOrder = ['tab-account','tab-employment','tab-education','tab-kin'];
+  const idx = tabOrder.indexOf(targetId);
+  document.querySelectorAll('.step-pill').forEach((s, i) => {
+    s.classList.toggle('active', i === idx);
+    if (i < idx) s.querySelector('.sn').innerHTML = '<i class="bi bi-check2" style="font-size:.7rem"></i>';
+    if (i >= idx) s.querySelector('.sn').textContent = i + 1;
+  });
+}
+
+tabs.forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.target));
+});
+
+/* Click step indicators too */
+document.querySelectorAll('.step-pill').forEach((pill, i) => {
+  const tabOrder = ['tab-account','tab-employment','tab-education','tab-kin'];
+  pill.style.cursor = 'pointer';
+  pill.addEventListener('click', () => switchTab(tabOrder[i]));
+});
+
+/* ── Auto-suggest username from first + last name ── */
+const firstNameInput = document.getElementById('id_first_name');
+const lastNameInput  = document.getElementById('id_last_name');
+const usernameInput  = document.getElementById('id_username');
+const summaryName    = document.getElementById('summaryName');
+const summaryAvatar  = document.getElementById('summaryAvatar');
+
+function updateUsername() {
+  const fn = (firstNameInput?.value || '').trim().toLowerCase().replace(/\s+/g,'');
+  const ln = (lastNameInput?.value  || '').trim().toLowerCase().replace(/\s+/g,'');
+  if (fn && ln && usernameInput && !usernameInput.dataset.manuallyChanged) {
+    usernameInput.value = fn + '.' + ln;
+  }
+  // Update summary
+  const full = [(lastNameInput?.value||'').trim(), (firstNameInput?.value||'').trim()].filter(Boolean).join(', ');
+  if (summaryName) summaryName.textContent = full || 'New Staff Member';
+  if (summaryAvatar) {
+    const fi = (firstNameInput?.value||'').trim()[0] || '';
+    const li = (lastNameInput?.value||'').trim()[0] || '';
+    summaryAvatar.textContent = (fi + li).toUpperCase() || '?';
+  }
+}
+
+if (firstNameInput) firstNameInput.addEventListener('input', updateUsername);
+if (lastNameInput)  lastNameInput.addEventListener('input', updateUsername);
+if (usernameInput)  usernameInput.addEventListener('input', () => { usernameInput.dataset.manuallyChanged = '1'; });
+
+/* ── Password strength meter ── */
+const pwdInput = document.getElementById('id_password');
+const fill     = document.getElementById('pwdStrengthFill');
+const hint     = document.getElementById('pwdHint');
+
+if (pwdInput && fill) {
+  pwdInput.addEventListener('input', () => {
+    const v = pwdInput.value;
+    let score = 0;
+    if (v.length >= 8)  score++;
+    if (/[A-Z]/.test(v)) score++;
+    if (/[0-9]/.test(v)) score++;
+    if (/[^A-Za-z0-9]/.test(v)) score++;
+    const pct   = [0, 25, 50, 75, 100][score];
+    const color = ['', '#EF4444','#F59E0B','#3B82F6','#22C55E'][score];
+    const label = ['', 'Weak','Fair','Good','Strong'][score];
+    fill.style.width      = pct + '%';
+    fill.style.background = color;
+    if (hint) hint.textContent = v.length ? label : 'Minimum 8 characters with mixed case & numbers.';
+  });
+}
+
+/* ── Toggle password visibility ── */
+function setupToggle(btnId, inputId) {
+  const btn = document.getElementById(btnId);
+  const inp = document.getElementById(inputId);
+  if (!btn || !inp) return;
+  btn.addEventListener('click', () => {
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+  });
+}
+setupToggle('togglePwd1', 'id_password');
+setupToggle('togglePwd2', 'id_confirm_password');
+
+/* ── Mark tabs with server-side errors ── */
+const errorFields = {
+  'tab-account':    ['id_first_name','id_last_name','id_username','id_email','id_password',
+                     'id_middle_name','id_gender','id_date_of_birth','id_state_of_origin',
+                     'id_phone_mobile','id_marital_status','id_nationality','id_address',
+                     'id_personal_email','id_official_email','id_phone_home'],
+  'tab-employment': ['id_employment_type','id_employment_status','id_staff_rank',
+                     'id_date_employed','id_confirmation_date','id_notes'],
+  'tab-education':  ['id_qualification','id_institution','id_graduation_year','id_professional_body'],
+  'tab-kin':        ['id_next_of_kin_name','id_next_of_kin_phone','id_next_of_kin_address',
+                     'id_guarantor_name','id_guarantor_phone','id_guarantor_email','id_guarantor_address'],
+};
+
+let firstErrorTab = null;
+Object.entries(errorFields).forEach(([tabId, fields]) => {
+  const tabBtn = document.querySelector(`[data-target="${tabId}"]`);
+  const hasError = fields.some(fId => {
+    const el = document.getElementById(fId);
+    return el && el.classList.contains('error');
+  });
+  // Also check for .form-error divs inside the panel
+  const panel = document.getElementById(tabId);
+  const panelHasError = panel && panel.querySelector('.form-error');
+  if (hasError || panelHasError) {
+    if (tabBtn) tabBtn.classList.add('has-error');
+    if (!firstErrorTab) firstErrorTab = tabId;
+  }
+});
+
+if (firstErrorTab) switchTab(firstErrorTab);
+
+/* ── Add .error class to any field with adjacent .form-error ── */
+document.querySelectorAll('.form-error').forEach(errEl => {
+  const input = errEl.closest('.form-group')?.querySelector('.form-control');
+  if (input) input.classList.add('error');
+});
+
+/* ── Save button loading state ── */
+document.getElementById('staffForm')?.addEventListener('submit', () => {
+  const btn = document.getElementById('saveBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving…';
+  }
+});
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+{% comment %} {% extends 'dashboard/base.html' %}
 {% block title %}Add New Staff{% endblock %}
 {% block breadcrumb %}Add Staff{% endblock %}
 
@@ -21,4 +806,4 @@
         </form>
     </div>
 </div>
-{% endblock %}
+{% endblock %} {% endcomment %}

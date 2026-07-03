@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 
 from .models import Staff, StaffAttendance
+from organization.models import StaffDeployment
 
 
 @admin.register(Staff)
@@ -189,6 +190,7 @@ class StaffAdmin(admin.ModelAdmin):
             "staff_rank",
             "user__profile",
         )
+        
 
     ##########################################################
 
@@ -247,7 +249,7 @@ class StaffAdmin(admin.ModelAdmin):
         deployment = obj.current_deployment
 
         if deployment:
-            return deployment.role
+            return deployment.designation.name
 
         return "-"
 

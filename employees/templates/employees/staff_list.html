@@ -1,38 +1,261 @@
-{% extends 'dashboard/base.html' %}
-{% block title %}Staff Directory{% endblock %}
-{% block breadcrumb %}Staff Directory{% endblock %}
+
+{# ═══════════════════════════════════════════════════════════════════════
+   HRPAMS — Staff List
+   File    : templates/employees/staff_list.html
+   Extends : base.html
+   Used by : StaffListView
+   ═══════════════════════════════════════════════════════════════════════ #}
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Staff Management{% endblock %}
+
+{% block breadcrumb %}
+  <span class="bc-current">Staff Management</span>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Staff Management</div>
+    <div class="page-subtitle">
+      {{ total_count }} total staff &nbsp;·&nbsp;
+      <span style="color:var(--green)">{{ active_count }} active</span>
+      &nbsp;·&nbsp;
+      <span style="color:var(--red)">{{ suspended_count }} suspended</span>
+    </div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'staff:list' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}&export=csv{% else %}?export=csv{% endif %}"
+       class="btn btn-outline">
+      <i class="bi bi-download"></i> Export CSV
+    </a>
+    <a href="{% url 'staff:create' %}" class="btn btn-gold">
+      <i class="bi bi-person-plus-fill"></i> Add New Staff
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.filter-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  flex-wrap: wrap;
+}
+.search-input-wrap {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--border-2); border-radius: var(--radius-sm);
+  padding: 0 12px; height: 34px; background: var(--surface);
+  flex: 1; min-width: 200px; max-width: 360px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.search-input-wrap:focus-within { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(11,29,58,.08); }
+.search-input-wrap input { border: none; outline: none; font-size: .82rem; font-family: var(--font-body); color: var(--text-primary); width: 100%; }
+.filter-select {
+  border: 1px solid var(--border-2); border-radius: var(--radius-sm);
+  padding: 0 10px; height: 34px; font-size: .8rem;
+  font-family: var(--font-body); color: var(--text-primary);
+  background: var(--surface); outline: none; cursor: pointer;
+}
+.staff-name-cell { display: flex; align-items: center; gap: 10px; }
+.staff-avatar-sm {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: 700; flex-shrink: 0;
+  font-family: var(--font-display);
+}
+.staff-primary   { font-size: .82rem; font-weight: 600; color: var(--text-primary); }
+.staff-secondary { font-size: .72rem; color: var(--text-muted); }
+.empty-state {
+  text-align: center; padding: 64px 20px;
+  color: var(--text-muted);
+}
+.empty-state i { font-size: 2.5rem; display: block; margin-bottom: 12px; color: var(--border-2); }
+.empty-state p { font-size: .875rem; margin-bottom: 20px; }
+.pagination-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; border-top: 1px solid var(--border);
+  font-size: .78rem; color: var(--text-muted); flex-wrap: wrap; gap: 10px;
+}
+.page-links { display: flex; gap: 4px; }
+.page-link {
+  width: 30px; height: 30px; border-radius: var(--radius-xs);
+  border: 1px solid var(--border); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78rem; color: var(--text-secondary); cursor: pointer;
+  text-decoration: none; transition: background .12s;
+}
+.page-link:hover, .page-link.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="card shadow-sm">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">All Staff</h5>
-        <a href="{% url 'employees:add' %}" class="btn btn-primary btn-sm">Add New Staff</a>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Status</th>
-                    <th>Dept/Branch</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for staff in staff_list %}
-                <tr>
-                    <td>{{ staff.employee_no }}</td>
-                    <td>{{ staff.full_name }}</td>
-                    <td><span class="badge bg-info">{{ staff.employment_status }}</span></td>
-                    <td>{{ employees.current_deployment.department|default:"Unassigned" }}</td>
-                    <td>
-                        <a href="{% url 'employees:edit' staff.uuid %}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+
+{# ── Status KPI strip ── #}
+<div class="kpi-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:20px">
+  <div class="kpi-card c-navy">
+    <div class="kpi-top"><div class="kpi-icon c-navy"><i class="bi bi-people-fill"></i></div></div>
+    <div class="kpi-value">{{ total_count }}</div>
+    <div class="kpi-label">Total Staff</div>
+  </div>
+  <div class="kpi-card c-green">
+    <div class="kpi-top"><div class="kpi-icon c-green"><i class="bi bi-person-check-fill"></i></div></div>
+    <div class="kpi-value">{{ active_count }}</div>
+    <div class="kpi-label">Active</div>
+  </div>
+  <div class="kpi-card c-red">
+    <div class="kpi-top"><div class="kpi-icon c-red"><i class="bi bi-person-x-fill"></i></div></div>
+    <div class="kpi-value">{{ suspended_count }}</div>
+    <div class="kpi-label">Suspended</div>
+  </div>
 </div>
+
+{# ── Main table card ── #}
+<div class="card section-mb">
+
+  {# Filter bar #}
+  <div class="filter-bar">
+    <form method="get" style="display:contents">
+      <div class="search-input-wrap">
+        <i class="bi bi-search" style="font-size:.8rem;color:var(--text-muted);flex-shrink:0"></i>
+        <input type="text" name="q" value="{{ q }}" placeholder="Search name, ID, phone, email…" />
+      </div>
+      <select name="status" class="filter-select" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary btn-sm">
+        <i class="bi bi-search"></i> Search
+      </button>
+      {% if q or status_filter %}
+      <a href="{% url 'employees:employee-list' %}" class="btn btn-outline btn-sm">
+        <i class="bi bi-x-circle"></i> Clear
+      </a>
+      {% endif %}
+    </form>
+    <span style="margin-left:auto;font-size:.75rem;color:var(--text-muted)">
+      {{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}
+    </span>
+  </div>
+
+  {# Table #}
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Staff Member</th>
+          <th>Employee No.</th>
+          <th>Mobile</th>
+          <th>Employment Type</th>
+          <th>Rank / Grade</th>
+          <th>Date Employed</th>
+          <th>Status</th>
+          <th style="text-align:right;padding-right:20px">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in staff_list %}
+        {% with initials=member.user.first_name|first|upper|add:member.user.last_name|first|upper %}
+        <tr>
+          <td>
+            <div class="staff-name-cell">
+              <div class="staff-avatar-sm avatar-navy">{{ initials }}</div>
+              <div>
+                <div class="staff-primary">{{ member.full_name }}</div>
+                <div class="staff-secondary">{{ member.official_email|default:member.user.email|default:"—" }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span style="font-family:var(--font-display);font-weight:700;font-size:.8rem">{{ member.employee_no }}</span>
+          </td>
+          <td>{{ member.phone_mobile|default:"—" }}</td>
+          <td>{{ member.employment_type }}</td>
+          <td>{{ member.staff_rank|default:"—" }}</td>
+          <td>{{ member.date_employed|date:"d M Y" }}</td>
+          <td>
+            <span class="pill
+              {% if member.employment_status == 'Active' %}active
+              {% elif member.employment_status == 'Suspended' %}suspended
+              {% elif member.employment_status == 'On Leave' %}on-leave
+              {% elif member.employment_status == 'Resigned' or member.employment_status == 'Terminated' %}suspended
+              {% else %}pending{% endif %}">
+              {{ member.employment_status }}
+            </span>
+          </td>
+          <td style="text-align:right;padding-right:20px">
+            <div style="display:flex;gap:6px;justify-content:flex-end">
+              {% comment %} <a href="{% url 'employees:detail' uuid=member.uuid %}" class="btn btn-icon btn-xs" title="View profile"> {% endcomment %}
+                <i class="bi bi-eye"></i>
+              </a>
+              {% if request.user.is_staff or request.user.is_superuser %}
+              {% comment %} <a href="{% url 'employees:update' uuid=member.uuid %}" class="btn btn-icon btn-xs" title="Edit record"> {% endcomment %}
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endwith %}
+        {% empty %}
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <i class="bi bi-people"></i>
+              <p>
+                {% if q or status_filter %}
+                  No staff found matching your search criteria.
+                {% else %}
+                  No staff members registered yet.
+                {% endif %}
+              </p>
+              {% if request.user.is_staff or request.user.is_superuser %}
+              <a href="{% url 'employees:add-employee' %}" class="btn btn-gold">
+                <i class="bi bi-person-plus-fill"></i> Register First Staff Member
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination #}
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="pagination-row">
+    <span>
+      Showing {{ page_obj.start_index }}–{{ page_obj.end_index }}
+      of {{ page_obj.paginator.count }} staff members
+    </span>
+    <div class="page-links">
+      {% if page_obj.has_previous %}
+      <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+          <span class="page-link active">{{ num }}</span>
+        {% elif num|add:"-2" <= page_obj.number and num|add:"2" >= page_obj.number %}
+          <a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>{# /card #}
 {% endblock %}
