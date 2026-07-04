@@ -481,10 +481,10 @@ from .services import IDCardService
 
 
 class IDCardDetailView(OwnCardOrManagerMixin, DetailView):
-    """URL: /id-cards/<uuid:staff_uuid>/  (name: idcards:view)"""
+    """URL: /employees/<uuid:staff_uuid>/  (name: idcards:view)"""
 
     model = StaffIDCard
-    template_name = "idcards/id_card.html"
+    template_name = "employees/id_card.html"
     context_object_name = "id_card"
 
     def get_object(self, queryset=None) -> StaffIDCard:
@@ -511,7 +511,7 @@ class IDCardDetailView(OwnCardOrManagerMixin, DetailView):
 class IDCardPrintView(OwnCardOrManagerMixin, View):
     """
     Standalone A4/CR80-ready print view — opens in a new tab.
-    URL: /id-cards/<uuid:staff_uuid>/print/  (name: idcards:print)
+    URL: /employees/<uuid:staff_uuid>/print/  (name: idcards:print)
     """
 
     def get(self, request, staff_uuid, *args, **kwargs):
@@ -520,13 +520,13 @@ class IDCardPrintView(OwnCardOrManagerMixin, View):
         card.mark_printed()
         return render(
             request,
-            "idcards/id_card_print.html",
+            "employees/id_card_print.html",
             {"staff": staff, "id_card": card},
         )
 
 
 class IDCardReissueView(ManagerRequiredMixin, View):
-    """POST only. URL: /id-cards/<uuid:staff_uuid>/reissue/"""
+    """POST only. URL: /employees/<uuid:staff_uuid>/reissue/"""
 
     def post(self, request, staff_uuid, *args, **kwargs):
         staff = get_object_or_404(Staff, uuid=staff_uuid)
@@ -535,11 +535,11 @@ class IDCardReissueView(ManagerRequiredMixin, View):
         messages.success(
             request, f"A new ID card has been issued for <strong>{staff.full_name}</strong>."
         )
-        return redirect("idcards:view", staff_uuid=staff.uuid)
+        return redirect("employees:view", staff_uuid=staff.uuid)
 
 
 class IDCardRevokeView(ManagerRequiredMixin, View):
-    """POST only. URL: /id-cards/<uuid:staff_uuid>/revoke/"""
+    """POST only. URL: /employees/<uuid:staff_uuid>/revoke/"""
 
     def post(self, request, staff_uuid, *args, **kwargs):
         staff = get_object_or_404(Staff, uuid=staff_uuid)
@@ -548,5 +548,5 @@ class IDCardRevokeView(ManagerRequiredMixin, View):
         messages.warning(
             request, f"<strong>{staff.full_name}</strong>'s ID card has been revoked."
         )
-        return redirect("idcards:view", staff_uuid=staff.uuid)
+        return redirect("employees:view", staff_uuid=staff.uuid)
 

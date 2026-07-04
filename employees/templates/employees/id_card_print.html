@@ -1,14 +1,3 @@
-{# ═══════════════════════════════════════════════════════════════════════
-   HRPAMS — Printable Staff ID Card (front + back)
-   File    : templates/idcards/id_card_print.html
-   Extends : nothing — standalone print document (no app shell / sidebar)
-   Used by : idcards.views.IDCardPrintView
-
-   Card size: CR80 standard (85.6mm × 53.98mm) — same size as a bank card.
-   Export path: browser "Print → Save as PDF". Zero server-side PDF
-   dependency, so this works unchanged on PythonAnywhere free plan,
-   shared cPanel/Passenger hosting, and a VPS alike.
-   ═══════════════════════════════════════════════════════════════════════ #}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -128,8 +117,8 @@
 
     <div class="body-row">
       <div class="photo-box">
-        {% if id_card.photo %}
-          <img src="{{ id_card.photo.url }}" alt="{{ staff.full_name }}">
+        {% if staff.user.profile.image %}
+          <img src="{{ staff.user.profile.image_url }}" alt="{{ staff.full_name }}">
         {% else %}
           {{ staff.user.first_name|first|upper }}{{ staff.user.last_name|first|upper }}
         {% endif %}
