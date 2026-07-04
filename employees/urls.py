@@ -29,6 +29,14 @@ from .views import (
     StaffStatusToggleView,
 )
 
+from .views import (
+    IDCardDetailView,
+    IDCardPrintView,
+    IDCardReissueView,
+    IDCardRevokeView,
+)
+
+
 app_name = "employees"
 
 urlpatterns = [
@@ -73,4 +81,9 @@ urlpatterns = [
         StaffStatusToggleView.as_view(),
         name="toggle_status",
     ),
+
+    path("<uuid:staff_uuid>/", IDCardDetailView.as_view(), name="view"),
+    path("<uuid:staff_uuid>/print/", IDCardPrintView.as_view(), name="print"),
+    path("<uuid:staff_uuid>/reissue/", IDCardReissueView.as_view(), name="reissue"),
+    path("<uuid:staff_uuid>/revoke/", IDCardRevokeView.as_view(), name="revoke"),
 ]

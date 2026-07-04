@@ -1,0 +1,299 @@
+{# ═══════════════════════════════════════════════════════════════════════
+   HRPAMS — Employee Self-Service Dashboard
+   File    : templates/dashboard/employee_home.html
+   Extends : base_employee.html  (NOT base.html — no admin menus here)
+   Used by : dashboard.views.DashboardHomeView._render_employee_dashboard
+   Context : dashboard.services.build_employee_dashboard_context()
+   ═══════════════════════════════════════════════════════════════════════ #}
+{% extends "dashboard/base_employee.html" %}
+{% load static %}
+
+{% block title %}My Dashboard{% endblock %}
+
+{% block breadcrumb %}<span class="bc-current">My Dashboard</span>{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-header {
+  background: var(--navy); border-radius: var(--radius-md);
+  padding: 26px 30px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+  position: relative; overflow: hidden;
+}
+.profile-header::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(201,168,76,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,.04) 1px, transparent 1px);
+  background-size: 36px 36px; pointer-events: none;
+}
+.profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--gold-muted); border: 3px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--gold); flex-shrink: 0; position: relative; z-index: 1; overflow:hidden; }
+.profile-avatar img { width:100%; height:100%; object-fit:cover; }
+.profile-info { flex: 1; position: relative; z-index: 1; min-width:200px; }
+.profile-name { font-family: var(--font-display); font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+.profile-emp-no { font-size: .8rem; color: var(--gold); font-weight: 600; margin-bottom: 8px; }
+.profile-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.profile-actions { display: flex; gap: 10px; position: relative; z-index: 1; flex-wrap: wrap; }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 20px; }
+
+.dash-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; align-items: start; }
+@media (max-width: 980px) { .dash-grid { grid-template-columns: 1fr; } }
+
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+.detail-field .df-label { font-size: .68rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+.detail-field .df-val { font-size: .85rem; color: var(--text-primary); font-weight: 500; }
+.detail-field .df-val.empty { color: var(--text-muted); font-style: italic; font-weight: 400; }
+
+.timeline { position: relative; padding-left: 22px; }
+.timeline::before { content:''; position:absolute; left:6px; top:4px; bottom:4px; width:2px; background:var(--border); }
+.tl-item { position: relative; padding-bottom: 18px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot { position: absolute; left: -22px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--gold); border: 2px solid var(--surface); box-shadow: 0 0 0 2px var(--gold-border); }
+.tl-title { font-size: .84rem; font-weight: 600; color: var(--text-primary); }
+.tl-meta { font-size: .72rem; color: var(--text-muted); margin-top: 2px; }
+.empty-hint { font-size: .82rem; color: var(--text-muted); font-style: italic; padding: 18px 0; text-align:center; }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="profile-header section-mb">
+  <div class="profile-avatar">
+    {% if staff.id_card.photo %}
+      <img src="{{ staff.id_card.photo.url }}" alt="{{ staff.full_name }}">
+    {% else %}
+      {{ staff.user.first_name|first|upper }}{{ staff.user.last_name|first|upper }}
+    {% endif %}
+  </div>
+  <div class="profile-info">
+    <div class="profile-name">Welcome back, {{ staff.user.first_name }}</div>
+    <div class="profile-emp-no">{{ staff.employee_no }} · {{ staff.staff_rank|default:staff.employment_type }}</div>
+    <div class="profile-tags">
+      <span class="pill {% if staff.employment_status == 'Active' %}active{% elif staff.employment_status == 'Suspended' %}suspended{% else %}pending{% endif %}">
+        {{ staff.employment_status }}
+      </span>
+      <span class="pill draft">{{ staff.employment_type }}</span>
+      {% if deployment %}<span class="pill approved"><i class="bi bi-building"></i>&nbsp;{{ deployment.company }}</span>{% endif %}
+    </div>
+  </div>
+  <div class="profile-actions">
+    <a href="{% url 'idcards:view' staff_uuid=staff.uuid %}" class="btn btn-gold btn-sm">
+      <i class="bi bi-person-badge-fill"></i> My ID Card
+    </a>
+    <a href="{% url 'staff:detail' uuid=staff.uuid %}" class="btn btn-outline-white btn-sm" style="border:1px solid rgba(255,255,255,.3);color:#fff;background:transparent">
+      <i class="bi bi-person-vcard"></i> Full Profile
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_content %}
+
+{# ══════════ KPI Row ══════════ #}
+<div class="kpi-grid">
+  <div class="kpi-card c-navy">
+    <div class="kpi-top">
+      <div class="kpi-icon c-navy"><i class="bi bi-cash-coin"></i></div>
+    </div>
+    <div class="kpi-value">{% if latest_payslip %}₦{{ latest_payslip.net_salary|floatformat:0 }}{% else %}—{% endif %}</div>
+    <div class="kpi-label">Last Net Pay {% if latest_payslip %}({{ latest_payslip.period }}){% endif %}</div>
+  </div>
+
+  <div class="kpi-card c-gold">
+    <div class="kpi-top">
+      <div class="kpi-icon c-gold"><i class="bi bi-bank2"></i></div>
+    </div>
+    <div class="kpi-value">₦{{ total_loan_balance|floatformat:0 }}</div>
+    <div class="kpi-label">Outstanding Loan Balance</div>
+  </div>
+
+  <div class="kpi-card c-green">
+    <div class="kpi-top">
+      <div class="kpi-icon c-green"><i class="bi bi-calendar2-check"></i></div>
+    </div>
+    <div class="kpi-value">{{ leave_summary.pending_requests|default:0 }}</div>
+    <div class="kpi-label">Pending Leave Requests</div>
+  </div>
+
+  <div class="kpi-card c-blue">
+    <div class="kpi-top">
+      <div class="kpi-icon c-blue"><i class="bi bi-building-check"></i></div>
+    </div>
+    <div class="kpi-value" style="font-size:1rem">{{ deployment.company|default:"Not Deployed" }}</div>
+    <div class="kpi-label">Current Deployment</div>
+  </div>
+</div>
+
+<div class="dash-grid">
+
+  {# ══════════ LEFT COLUMN ══════════ #}
+  <div>
+
+    {# Payroll information #}
+    <div class="card section-mb">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-cash-stack"></i> Recent Payslips</div>
+        <a href="{% url 'payroll:my_payslips' %}" class="btn btn-outline btn-sm">View All</a>
+      </div>
+      <div class="card-body" style="padding:0">
+        {% if payslips %}
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Period</th><th>Gross</th><th>Deductions</th><th>Net Pay</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in payslips %}
+              <tr>
+                <td>{{ p.period }}</td>
+                <td>₦{{ p.gross_salary|floatformat:0 }}</td>
+                <td>₦{{ p.total_deductions|floatformat:0 }}</td>
+                <td style="font-weight:700;color:var(--navy)">₦{{ p.net_salary|floatformat:0 }}</td>
+                <td><span class="pill {% if p.status == 'Paid' %}active{% else %}pending{% endif %}">{{ p.status }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-hint">No payslips have been generated for you yet.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Deployment #}
+    <div class="card section-mb">
+      <div class="card-header"><div class="card-title"><i class="bi bi-building-check"></i> Current Deployment</div></div>
+      <div class="card-body">
+        {% if deployment %}
+        <div class="detail-grid">
+          <div class="detail-field"><div class="df-label">Client Organization</div><div class="df-val">{{ deployment.company }}</div></div>
+          <div class="detail-field"><div class="df-label">Department</div><div class="df-val {% if not deployment.department %}empty{% endif %}">{{ deployment.department|default:"Not assigned" }}</div></div>
+          <div class="detail-field"><div class="df-label">Branch</div><div class="df-val {% if not deployment.branch %}empty{% endif %}">{{ deployment.branch|default:"Not assigned" }}</div></div>
+          <div class="detail-field"><div class="df-label">Role on Site</div><div class="df-val {% if not deployment.role %}empty{% endif %}">{{ deployment.role|default:"Not assigned" }}</div></div>
+          <div class="detail-field"><div class="df-label">Deployed Since</div><div class="df-val">{{ deployment.start_date|date:"d M Y" }}</div></div>
+        </div>
+        {% else %}
+        <div class="empty-hint">You are not currently deployed to a client organization.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Employment History #}
+    <div class="card section-mb">
+      <div class="card-header"><div class="card-title"><i class="bi bi-clock-history"></i> My Employment History</div></div>
+      <div class="card-body">
+        {% if employment_history %}
+        <div class="timeline">
+          {% for event in employment_history %}
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-title">{{ event.event_type }}{% if event.new_value %} — {{ event.new_value }}{% endif %}</div>
+            <div class="tl-meta">{{ event.effective_date|date:"d M Y" }}{% if event.reason %} · {{ event.reason }}{% endif %}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-hint">No employment history events recorded yet.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Full personal directory ─ read-only ─ */}
+    <div class="card section-mb">
+      <div class="card-header"><div class="card-title"><i class="bi bi-person-lines-fill"></i> My Personal Information</div></div>
+      <div class="card-body">
+        <div class="detail-grid">
+          <div class="detail-field"><div class="df-label">Full Name</div><div class="df-val">{{ staff.full_name }}</div></div>
+          <div class="detail-field"><div class="df-label">Gender</div><div class="df-val">{{ staff.gender }}</div></div>
+          <div class="detail-field"><div class="df-label">Date of Birth</div><div class="df-val">{{ staff.date_of_birth|date:"d F Y" }}</div></div>
+          <div class="detail-field"><div class="df-label">Marital Status</div><div class="df-val">{{ staff.marital_status }}</div></div>
+          <div class="detail-field"><div class="df-label">Mobile Phone</div><div class="df-val {% if not staff.phone_mobile %}empty{% endif %}">{{ staff.phone_mobile|default:"Not provided" }}</div></div>
+          <div class="detail-field"><div class="df-label">Official Email</div><div class="df-val {% if not staff.official_email %}empty{% endif %}">{{ staff.official_email|default:"Not provided" }}</div></div>
+          <div class="detail-field"><div class="df-label">Employee Number</div><div class="df-val" style="font-family:var(--font-display);font-weight:800;color:var(--navy)">{{ staff.employee_no }}</div></div>
+          <div class="detail-field"><div class="df-label">Date Employed</div><div class="df-val">{{ staff.date_employed|date:"d F Y" }}</div></div>
+          <div class="detail-field"><div class="df-label">Employment Type</div><div class="df-val">{{ staff.employment_type }}</div></div>
+          <div class="detail-field"><div class="df-label">Staff Rank</div><div class="df-val {% if not staff.staff_rank %}empty{% endif %}">{{ staff.staff_rank|default:"Not assigned" }}</div></div>
+        </div>
+        <div style="margin-top:16px;text-align:right">
+          <a href="{% url 'staff:detail' uuid=staff.uuid %}" class="btn btn-outline btn-sm">
+            <i class="bi bi-eye"></i> View Full Directory Record
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>{# /left #}
+
+  {# ══════════ RIGHT COLUMN ══════════ #}
+  <div>
+
+    {# Leave balances #}
+    <div class="card section-mb">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-calendar2-week"></i> Leave Balances</div>
+        <a href="{% url 'leave:my_requests' %}" class="btn btn-outline btn-sm">Apply</a>
+      </div>
+      <div style="padding:6px 0">
+        {% if leave_summary.balances %}
+          {% for b in leave_summary.balances %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--border)">
+            <span style="font-size:.82rem;color:var(--text-secondary)">{{ b.leave_type }}</span>
+            <span style="font-size:.85rem;font-weight:700;color:var(--navy)">
+              {{ b.used_days }} used / {{ b.entitled_days }} days
+            </span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-hint">No leave balances on file yet.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Active loans #}
+    <div class="card section-mb">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-bank2"></i> My Loans</div>
+        <a href="{% url 'loan:my_loans' %}" class="btn btn-outline btn-sm">Details</a>
+      </div>
+      <div style="padding:6px 0">
+        {% if loans %}
+          {% for loan in loans %}
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+            <div style="display:flex;justify-content:space-between;font-size:.83rem;font-weight:600;color:var(--text-primary)">
+              <span>{{ loan.loan_type }}</span>
+              <span>₦{{ loan.balance|floatformat:0 }}</span>
+            </div>
+            <div style="font-size:.7rem;color:var(--text-muted);margin-top:2px">
+              Monthly deduction: ₦{{ loan.monthly_deduction|floatformat:0 }} · {{ loan.status }}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-hint">You have no active loans.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ID Card widget #}
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-person-badge-fill"></i> Staff ID Card</div></div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center">
+        <i class="bi bi-person-badge" style="font-size:2.2rem;color:var(--gold)"></i>
+        <div style="font-size:.8rem;color:var(--text-muted)">
+          {% if staff.id_card %}
+            Card {{ staff.id_card.card_number }} · Valid thru {{ staff.id_card.expiry_date|date:"M Y" }}
+          {% else %}
+            Your ID card has not been issued yet.
+          {% endif %}
+        </div>
+        <a href="{% url 'idcards:view' staff_uuid=staff.uuid %}" class="btn btn-primary btn-sm btn-full">
+          <i class="bi bi-eye"></i> View / Print My Card
+        </a>
+      </div>
+    </div>
+
+  </div>{# /right #}
+
+</div>{# /dash-grid #}
+{% endblock %}

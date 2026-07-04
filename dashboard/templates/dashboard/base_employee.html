@@ -1,0 +1,383 @@
+{% comment %} {# ═══════════════════════════════════════════════════════════════════════
+   HRPAMS — Employee Self-Service Base Template
+   File   : templates/base_employee.html
+   Extends: Nothing (root template for employee-facing pages only)
+   Usage  : {% extends "base_employee.html" %}
+
+   This is a DELIBERATELY STRIPPED-DOWN sibling of base.html.
+   It shares the same design tokens (hrpams.css) and app-shell mechanics
+   (sidebar collapse, notification/user dropdowns, toast messages — same
+   hrpams.js) but the sidebar carries ONLY the links a regular staff
+   member (is_staff=False) is allowed to see: their own dashboard,
+   profile, payslips, leave, loans, ID card, documents, and account
+   settings. None of the HR/Payroll/Accounting/System admin menus render
+   here — this is what makes the employee experience feel like a personal
+   portal rather than the management console.
+
+   Blocks exposed to child templates (same contract as base.html)
+   ──────────────────────────────────────────────────────────────────────
+   {% block title %}          — <title> content
+   {% block extra_css %}      — page-specific <style> tags
+   {% block breadcrumb %}     — text shown in topbar breadcrumb
+   {% block page_header %}    — page title + subtitle + action buttons
+   {% block page_content %}   — MAIN content area (required)
+   {% block extra_js %}       — page-specific <script> tags
+
+   Named URLs this template expects to exist
+   ──────────────────────────────────────────────────────────────────────
+     dashboard:home          accounts:profile        accounts:change_password
+     staff:detail            payroll:my_payslips     leave:my_requests
+     idcards:view            loan:my_loans           documents:my_documents
+     accounts:logout         notifications:list
+   ═══════════════════════════════════════════════════════════════════════ #} {% endcomment %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>HRPAMS | {% block title %}My Dashboard{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'css/hrpams.css' %}" />
+
+  <style>
+  /* ── App shell — identical mechanics to base.html, kept in sync ── */
+  .app-shell { display: flex; height: 100vh; overflow: hidden; }
+  .sb-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 199; backdrop-filter: blur(2px); }
+  .sb-overlay.active { display: block; }
+
+  .sidebar {
+    width: var(--sidebar-w); flex-shrink: 0; background: var(--navy);
+    height: 100vh; overflow-y: auto; overflow-x: hidden;
+    display: flex; flex-direction: column;
+    transition: width .25s cubic-bezier(.4,0,.2,1);
+    position: relative; z-index: 200; scrollbar-width: none;
+  }
+  .sidebar::-webkit-scrollbar { display: none; }
+  .sidebar.collapsed { width: var(--sidebar-collapsed); }
+  @media (max-width: 1023px) {
+    .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); width: var(--sidebar-w) !important; transition: transform .28s cubic-bezier(.4,0,.2,1); }
+    .sidebar.mobile-open { transform: translateX(0); }
+  }
+
+  .sb-brand { display: flex; align-items: center; gap: 12px; padding: 0 16px; height: var(--topbar-h); border-bottom: 1px solid rgba(255,255,255,.07); flex-shrink: 0; overflow: hidden; white-space: nowrap; text-decoration: none; }
+  .sb-brand-icon { width: 36px; height: 36px; background: var(--gold); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; font-size: .85rem; color: var(--navy); flex-shrink: 0; }
+  .sb-brand-text .name { font-family: var(--font-display); font-weight: 800; font-size: .95rem; color: #fff; line-height: 1.1; display: block; }
+  .sb-brand-text .sub  { font-size: .6rem; color: var(--text-muted); letter-spacing: .06em; text-transform: uppercase; display: block; }
+  .sidebar.collapsed .sb-brand-text { display: none; }
+
+  .sb-user { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.06); overflow: hidden; white-space: nowrap; flex-shrink: 0; }
+  .sb-user-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--gold-muted); border: 1.5px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .78rem; color: var(--gold); flex-shrink: 0; font-family: var(--font-display); overflow:hidden; }
+  .sb-user-avatar img { width:100%; height:100%; object-fit:cover; }
+  .sb-user-info .uname { font-size: .8rem; font-weight: 600; color: #fff; display: block; overflow: hidden; text-overflow: ellipsis; }
+  .sb-user-info .urole { font-size: .68rem; color: var(--text-muted); display: block; }
+  .sidebar.collapsed .sb-user-info { display: none; }
+
+  .sb-nav { flex: 1; padding: 8px 0; overflow-y: auto; scrollbar-width: none; }
+  .sb-nav::-webkit-scrollbar { display: none; }
+  .sb-group { padding: 16px 16px 4px; font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; overflow: hidden; transition: opacity .2s; }
+  .sidebar.collapsed .sb-group { opacity: 0; height: 0; padding: 0; }
+
+  .sb-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; margin: 1px 8px; border-radius: var(--radius-sm); color: rgba(255,255,255,.65); font-size: .83rem; font-weight: 500; cursor: pointer; transition: background .15s, color .15s; white-space: nowrap; overflow: hidden; position: relative; border: none; background: none; width: calc(100% - 16px); text-align: left; text-decoration: none; }
+  .sb-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+  .sb-item.active { background: var(--gold-muted); color: var(--gold); }
+  .sb-item.active::before { content: ''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; background: var(--gold); border-radius: 0 2px 2px 0; margin-left: -14px; }
+  .sb-icon { font-size: 1rem; flex-shrink: 0; width: 20px; text-align: center; }
+  .sb-label { flex: 1; }
+  .sidebar.collapsed .sb-label { display: none; }
+  .sidebar.collapsed .sb-item { justify-content: center; }
+  .sb-badge { font-size: .6rem; font-weight: 700; padding: 1px 6px; border-radius: 100px; background: var(--gold); color: var(--navy); flex-shrink: 0; }
+  .sidebar.collapsed .sb-badge { display: none; }
+
+  .sb-collapse-btn { display: flex; align-items: center; justify-content: center; padding: 12px 0; border-top: 1px solid rgba(255,255,255,.06); color: var(--text-muted); font-size: .95rem; cursor: pointer; transition: color .2s; background: none; border-bottom: none; border-left: none; border-right: none; width: 100%; flex-shrink: 0; }
+  .sb-collapse-btn:hover { color: var(--gold); }
+  @media (max-width: 1023px) { .sb-collapse-btn { display: none; } }
+
+  .main-area { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  .topbar { height: var(--topbar-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; position: relative; z-index: 10; }
+  .topbar-hamburger { width: 36px; height: 36px; border: none; background: none; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--text-secondary); flex-shrink: 0; transition: background .15s, color .15s; }
+  .topbar-hamburger:hover { background: var(--bg); color: var(--navy); }
+  .topbar-breadcrumb { display: flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--text-muted); flex: 1; }
+  .topbar-breadcrumb .bc-current { color: var(--text-primary); font-weight: 600; }
+  .topbar-breadcrumb i { font-size: .65rem; }
+  .topbar-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  .tb-icon-btn { position: relative; width: 34px; height: 34px; border: 1px solid var(--border); background: var(--bg); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: .95rem; transition: background .15s, color .15s, border-color .15s; }
+  .tb-icon-btn:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .tb-notif-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: var(--red); border-radius: 50%; border: 1.5px solid var(--surface); }
+  .tb-user { display: flex; align-items: center; gap: 8px; padding: 0 10px 0 6px; height: 34px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); cursor: pointer; transition: background .15s; text-decoration: none; }
+  .tb-user:hover { background: var(--border); }
+  .tb-user-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--navy); color: var(--gold); font-size: .65rem; font-weight: 700; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); overflow:hidden; }
+  .tb-user-avatar img { width:100%; height:100%; object-fit:cover; }
+  .tb-user-name { font-size: .78rem; font-weight: 600; color: var(--text-primary); }
+  .tb-user-chevron { font-size: .6rem; color: var(--text-muted); }
+  @media (max-width: 599px) { .tb-user-name { display: none; } }
+
+  .page-content { flex: 1; overflow-y: auto; padding: 24px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .page-content::-webkit-scrollbar { width: 5px; }
+  .page-content::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+  @media (max-width: 599px) { .page-content { padding: 16px; } }
+
+  .notif-dropdown { position: absolute; top: calc(var(--topbar-h) + 4px); right: 16px; width: 340px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 500; display: none; overflow: hidden; }
+  .notif-dropdown.open { display: block; }
+  .notif-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: .82rem; font-weight: 700; color: var(--text-primary); gap: 8px; }
+  .notif-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .12s; }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-item:hover { background: var(--surface-2); }
+  .notif-item.unread { background: rgba(201,168,76,.04); }
+  .notif-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+  .notif-body { flex: 1; }
+  .notif-body .nt { font-size: .78rem; color: var(--text-primary); line-height: 1.4; }
+  .notif-body .ns { font-size: .68rem; color: var(--text-muted); margin-top: 3px; }
+  .notif-unread-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); flex-shrink: 0; margin-top: 6px; }
+
+  .user-dropdown { position: absolute; top: calc(var(--topbar-h) + 4px); right: 16px; min-width: 200px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 500; display: none; overflow: hidden; }
+  .user-dropdown.open { display: block; }
+  .ud-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .ud-header .udname { font-size: .85rem; font-weight: 700; color: var(--text-primary); }
+  .ud-header .udemail { font-size: .73rem; color: var(--text-muted); }
+  .ud-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: .82rem; color: var(--text-secondary); cursor: pointer; transition: background .12s; text-decoration: none; }
+  .ud-item:hover { background: var(--surface-2); color: var(--navy); }
+  .ud-item i { width: 16px; text-align: center; color: var(--text-muted); }
+  .ud-item:hover i { color: var(--navy); }
+  .ud-item.danger { color: var(--red); }
+  .ud-item.danger i { color: var(--red); }
+  .ud-item.danger:hover { background: var(--red-bg); }
+  .ud-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+
+  .app-footer { text-align: center; padding: 14px 20px 6px; font-size: .71rem; color: var(--text-muted); border-top: 1px solid var(--border); flex-shrink: 0; }
+  </style>
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{# ── Django messages: toast stack (identical to base.html) ── #}
+{% if messages %}
+<div class="messages-stack">
+  {% for message in messages %}
+  <div class="msg-toast {{ message.tags }}">
+    <span class="msg-toast-icon">
+      {% if message.tags == 'success' %}✅
+      {% elif message.tags == 'error' %}❌
+      {% elif message.tags == 'warning' %}⚠️
+      {% else %}ℹ️{% endif %}
+    </span>
+    <div class="msg-toast-body">{{ message }}</div>
+    <button class="msg-toast-close" aria-label="Dismiss">✕</button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="app-shell">
+
+  <div class="sb-overlay" id="sbOverlay"></div>
+
+  {# ══════════════════════════════════════════════
+     SIDEBAR — Employee Self-Service (deliberately minimal)
+  ══════════════════════════════════════════════ #}
+  <aside class="sidebar" id="sidebar">
+
+    <a class="sb-brand" href="{% url 'dashboard:staff-home' %}">
+      <div class="sb-brand-icon">HR</div>
+      <div class="sb-brand-text">
+        <span class="name">HRPAMS</span>
+        <span class="sub">Employee Portal</span>
+      </div>
+    </a>
+
+    <div class="sb-user">
+      <div class="sb-user-avatar">
+        {% if request.user.staff_profile.id_card.photo %}
+          <img src="{{ request.user.staff_profile.id_card.photo.url }}" alt="">
+        {% else %}
+          {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+        {% endif %}
+      </div>
+      <div class="sb-user-info">
+        <span class="uname">{{ request.user.get_full_name|default:request.user.username }}</span>
+        <span class="urole">{{ request.user.staff_profile.employee_no|default:"Staff" }}</span>
+      </div>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-group">My Workspace</div>
+
+      <a href="{% url 'dashboard:staff-home' %}" class="sb-item {% if request.resolver_match.url_name == 'home' and request.resolver_match.namespace == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-speedometer2 sb-icon"></i>
+        <span class="sb-label">My Dashboard</span>
+      </a>
+
+      <a href="{% url 'employees:detail' uuid=request.user.staff_profile.uuid %}" class="sb-item {% if 'staff' in request.resolver_match.namespace %}active{% endif %}">
+        <i class="bi bi-person-vcard-fill sb-icon"></i>
+        <span class="sb-label">My Profile</span>
+      </a>
+
+      <a href="{% url 'employees:view' staff_uuid=request.user.staff_profile.uuid %}" class="sb-item {% if 'idcards' in request.resolver_match.namespace %}active{% endif %}">
+        <i class="bi bi-person-badge-fill sb-icon"></i>
+        <span class="sb-label">My ID Card</span>
+      </a>
+
+      <div class="sb-group">Payroll &amp; Benefits</div>
+
+      {% comment %} <a href="{% url 'payroll:my_payslips' %}" class="sb-item {% if 'payroll' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
+        <i class="bi bi-cash-stack sb-icon"></i>
+        <span class="sb-label">My Payslips</span>
+      </a>
+
+      {% comment %} <a href="{% url 'loan:my_loans' %}" class="sb-item {% if 'loan' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
+        <i class="bi bi-bank2 sb-icon"></i>
+        <span class="sb-label">My Loans</span>
+      </a>
+
+      {% comment %} <a href="{% url 'leave:my_requests' %}" class="sb-item {% if 'leave' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
+        <i class="bi bi-calendar2-check sb-icon"></i>
+        <span class="sb-label">My Leave</span>
+      </a>
+
+      <div class="sb-group">Records</div>
+
+      {% comment %} <a href="{% url 'documents:my_documents' %}" class="sb-item {% if 'documents' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
+        <i class="bi bi-folder-fill sb-icon"></i>
+        <span class="sb-label">My Documents</span>
+      </a>
+
+      {% comment %} <a href="{% url 'notifications:list' %}" class="sb-item {% if 'notifications' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
+        <i class="bi bi-bell-fill sb-icon"></i>
+        <span class="sb-label">Notifications</span>
+        {% if unread_notification_count %}<span class="sb-badge">{{ unread_notification_count }}</span>{% endif %}
+      </a>
+
+      <div class="sb-group">Account</div>
+
+      {% comment %} <a href="{% url 'accounts:change_password' %}" class="sb-item {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}"> {% endcomment %}
+        <i class="bi bi-lock-fill sb-icon"></i>
+        <span class="sb-label">Change Password</span>
+      </a>
+
+    </nav>
+
+    <button class="sb-collapse-btn" id="collapseBtn" title="Toggle sidebar">
+      <i class="bi bi-chevron-double-left" id="collapseIcon"></i>
+    </button>
+
+  </aside>
+
+  <div class="main-area">
+
+    <header class="topbar">
+      <button class="topbar-hamburger" id="hamburgerBtn" title="Toggle navigation">
+        <i class="bi bi-list"></i>
+      </button>
+
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'dashboard:staff-home' %}" style="color:inherit">HRPAMS</a>
+        <i class="bi bi-chevron-right"></i>
+        {% block breadcrumb %}<span class="bc-current">My Dashboard</span>{% endblock %}
+      </div>
+
+      <div class="topbar-actions">
+        <button class="tb-icon-btn" id="notifBtn" title="Notifications">
+          <i class="bi bi-bell"></i>
+          {% if unread_notification_count %}<span class="tb-notif-dot"></span>{% endif %}
+        </button>
+
+        <button class="tb-user" id="userMenuBtn" aria-label="User menu">
+          <div class="tb-user-avatar">
+            {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+          </div>
+          <span class="tb-user-name">{{ request.user.get_short_name|default:request.user.username }}</span>
+          <i class="bi bi-chevron-down tb-user-chevron"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="notif-dropdown" id="notifDropdown">
+      <div class="notif-head">
+        Notifications
+        {% if unread_notification_count %}<span class="pill pending">{{ unread_notification_count }} new</span>{% endif %}
+      </div>
+      {% for notif in recent_notifications %}
+      <div class="notif-item {% if not notif.is_read %}unread{% endif %}">
+        <span class="notif-icon">{{ notif.icon|default:"🔔" }}</span>
+        <div class="notif-body">
+          <div class="nt">{{ notif.message }}</div>
+          <div class="ns">{{ notif.created_at|timesince }} ago</div>
+        </div>
+        {% if not notif.is_read %}<div class="notif-unread-dot"></div>{% endif %}
+      </div>
+      {% empty %}
+      <div style="padding:24px;text-align:center;font-size:.82rem;color:var(--text-muted)">
+        <i class="bi bi-bell-slash" style="font-size:1.5rem;display:block;margin-bottom:8px"></i>
+        No new notifications
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="user-dropdown" id="userDropdown">
+      <div class="ud-header">
+        <div class="udname">{{ request.user.get_full_name|default:request.user.username }}</div>
+        <div class="udemail">{{ request.user.email }}</div>
+      </div>
+      <a href="{% url 'employees:detail' uuid=request.user.staff_profile.uuid %}" class="ud-item"><i class="bi bi-person"></i> My Profile</a>
+      <a href="{% url 'employees:view' staff_uuid=request.user.staff_profile.uuid %}" class="ud-item"><i class="bi bi-person-badge"></i> My ID Card</a>
+      <a href="{% url 'password_reset' %}" class="ud-item"><i class="bi bi-lock"></i> Change Password</a>
+      <hr class="ud-divider" />
+      <a href="{% url 'logout' %}" class="ud-item danger">
+        <i class="bi bi-box-arrow-right"></i> Sign Out
+      </a>
+    </div>
+
+    <main class="page-content">
+      {% block page_header %}{% endblock %}
+      {% block page_content %}{% endblock %}
+    </main>
+
+    <footer class="app-footer">
+      HRPAMS Employee Portal &nbsp;·&nbsp; &copy; {% now "Y" %} KwikSchools
+    </footer>
+
+  </div>
+</div>
+
+<script src="{% static 'js/hrpams.js' %}"></script>
+<script>
+(function() {
+  const btn = document.getElementById('userMenuBtn');
+  const dropdown = document.getElementById('userDropdown');
+  const notifDD = document.getElementById('notifDropdown');
+  if (!btn || !dropdown) return;
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+    notifDD.classList.remove('open');
+  });
+  document.addEventListener('click', e => {
+    if (!dropdown.contains(e.target)) dropdown.classList.remove('open');
+  });
+})();
+(function() {
+  const btn = document.getElementById('notifBtn');
+  const dropdown = document.getElementById('notifDropdown');
+  const userDD = document.getElementById('userDropdown');
+  if (!btn || !dropdown) return;
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+    userDD.classList.remove('open');
+  });
+  document.addEventListener('click', e => {
+    if (!dropdown.contains(e.target)) dropdown.classList.remove('open');
+  });
+})();
+</script>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

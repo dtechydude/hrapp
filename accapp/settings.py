@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'djrichtextfield',
     'tinymce',
     'django_cleanup.apps.CleanupConfig',
+    'qr_code',
     # 'django_rename_app',
 
 

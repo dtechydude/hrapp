@@ -451,3 +451,102 @@ class StaffStatusToggleView(StaffManagerRequiredMixin, View):
             + (f" Reason: {reason}" if reason else ""),
         )
         return redirect("employees:detail", uuid=str(staff.uuid))
+
+
+
+"""
+idcards/views.py
+───────────────────────────────────────────────────────────────────────────
+Views are deliberately thin — all business logic lives in services.py.
+
+  IDCardDetailView   — on-screen view inside the app shell (base.html),
+                        with Print / Reissue / Revoke actions for managers.
+  IDCardPrintView    — chrome-free, print-ready card (front + back).
+                        Browser "Print → Save as PDF" is the export path,
+                        so no server-side PDF library is required and the
+                        feature works unchanged on every hosting tier.
+  IDCardReissueView  — POST-only, managers only.
+  IDCardRevokeView   — POST-only, managers only.
+───────────────────────────────────────────────────────────────────────────
+"""
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.generic import DetailView, View
+
+from employees.models import Staff
+
+from .mixins import ManagerRequiredMixin, OwnCardOrManagerMixin
+from .models import StaffIDCard
+from .services import IDCardService
+
+
+class IDCardDetailView(OwnCardOrManagerMixin, DetailView):
+    """URL: /id-cards/<uuid:staff_uuid>/  (name: idcards:view)"""
+
+    model = StaffIDCard
+    template_name = "idcards/id_card.html"
+    context_object_name = "id_card"
+
+    def get_object(self, queryset=None) -> StaffIDCard:
+        staff = get_object_or_404(
+            Staff.objects.select_related("user", "staff_rank"),
+            uuid=self.kwargs["staff_uuid"],
+        )
+        self.staff = staff
+        # Safety net for staff records created before this module existed —
+        # issue_card() is idempotent (get_or_create), so this never
+        # duplicates a card for staff created normally via the signal.
+        return IDCardService.issue_card(staff=staff)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["staff"] = self.staff
+        ctx["can_manage"] = self.request.user.is_staff or self.request.user.is_superuser
+        ctx["page_title"] = f"ID Card — {self.staff.full_name}"
+        ctx["page_subtitle"] = f"Employee No: {self.staff.employee_no}"
+        ctx["breadcrumb"] = "Staff ID Card"
+        return ctx
+
+
+class IDCardPrintView(OwnCardOrManagerMixin, View):
+    """
+    Standalone A4/CR80-ready print view — opens in a new tab.
+    URL: /id-cards/<uuid:staff_uuid>/print/  (name: idcards:print)
+    """
+
+    def get(self, request, staff_uuid, *args, **kwargs):
+        staff = get_object_or_404(Staff.objects.select_related("user"), uuid=staff_uuid)
+        card = IDCardService.issue_card(staff=staff)
+        card.mark_printed()
+        return render(
+            request,
+            "idcards/id_card_print.html",
+            {"staff": staff, "id_card": card},
+        )
+
+
+class IDCardReissueView(ManagerRequiredMixin, View):
+    """POST only. URL: /id-cards/<uuid:staff_uuid>/reissue/"""
+
+    def post(self, request, staff_uuid, *args, **kwargs):
+        staff = get_object_or_404(Staff, uuid=staff_uuid)
+        reason = request.POST.get("reason", "").strip()
+        IDCardService.reissue_card(staff, issued_by=request.user, reason=reason)
+        messages.success(
+            request, f"A new ID card has been issued for <strong>{staff.full_name}</strong>."
+        )
+        return redirect("idcards:view", staff_uuid=staff.uuid)
+
+
+class IDCardRevokeView(ManagerRequiredMixin, View):
+    """POST only. URL: /id-cards/<uuid:staff_uuid>/revoke/"""
+
+    def post(self, request, staff_uuid, *args, **kwargs):
+        staff = get_object_or_404(Staff, uuid=staff_uuid)
+        reason = request.POST.get("reason", "").strip()
+        IDCardService.revoke_card(staff, revoked_by=request.user, reason=reason)
+        messages.warning(
+            request, f"<strong>{staff.full_name}</strong>'s ID card has been revoked."
+        )
+        return redirect("idcards:view", staff_uuid=staff.uuid)
+

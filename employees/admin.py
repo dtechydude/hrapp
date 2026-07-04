@@ -290,3 +290,77 @@ class StaffAttendanceAdmin(admin.ModelAdmin):
     date_hierarchy = "date"
 
     list_per_page = 100
+
+
+
+"""
+idcards/admin.py
+───────────────────────────────────────────────────────────────────────────
+Django admin registration for StaffIDCard and its reissue history.
+Hard delete is intentionally not exposed anywhere in the portal UI (see
+views.py) — the admin is the only place a card row can be removed, and
+even here the reissue log is kept read-only to preserve history.
+───────────────────────────────────────────────────────────────────────────
+"""
+from django.contrib import admin
+
+from .models import IDCardReissueLog, StaffIDCard
+
+
+class ReissueLogInline(admin.TabularInline):
+    model = IDCardReissueLog
+    extra = 0
+    readonly_fields = (
+        "previous_card_number",
+        "new_card_number",
+        "reason",
+        "action",
+        "performed_by",
+        "performed_at",
+    )
+    can_delete = False
+    max_num = 0  # display-only; new rows are created by services.py
+
+
+@admin.register(StaffIDCard)
+class StaffIDCardAdmin(admin.ModelAdmin):
+    list_display = (
+        "card_number",
+        "staff",
+        "status",
+        "issue_date",
+        "expiry_date",
+        "is_printed",
+        "print_count",
+    )
+    list_filter = ("status", "is_printed", "issue_date")
+    search_fields = (
+        "card_number",
+        "staff__user__first_name",
+        "staff__user__last_name",
+        "staff__employee_no",
+    )
+    readonly_fields = (
+        "uuid",
+        "card_number",
+        "qr_code",
+        "print_count",
+        "last_printed_at",
+        "created_at",
+        "updated_at",
+    )
+    autocomplete_fields = ("staff",)
+    inlines = [ReissueLogInline]
+
+
+@admin.register(IDCardReissueLog)
+class IDCardReissueLogAdmin(admin.ModelAdmin):
+    list_display = ("card", "action", "previous_card_number", "new_card_number", "performed_by", "performed_at")
+    list_filter = ("action",)
+    search_fields = ("card__card_number", "previous_card_number", "new_card_number")
+
+    def has_add_permission(self, request):
+        return False  # rows are only ever created via IDCardService
+
+    def has_change_permission(self, request, obj=None):
+        return False
