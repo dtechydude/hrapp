@@ -8,11 +8,8 @@ app_name ='dashboard'
 
 urlpatterns = [
 
-     path('', dashboard_views.landing_page, name='app-home'), 
-
-     path('dashboard/', dashboard_views.dashboard, name="portal-home"),  
-     path('staff/', DashboardHomeView.as_view(), name="staff-home"),
-   
-    
+    path('', dashboard_views.admin_dashboard, name='app-home'),     
+    path('staff/', DashboardHomeView.as_view(), name="staff-home"),
+          
 
 ]

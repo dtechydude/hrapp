@@ -357,7 +357,7 @@ class CustomLoginView(LoginView):
 
 
 class SafePasswordResetView(auth_views.PasswordResetView):
-    template_name = 'users/password_reset.html'
+    template_name = 'users/password_reset_form.html'
     email_template_name = 'registration/password_reset_email_text.txt'
     html_email_template_name = 'registration/password_reset_email.html'
 

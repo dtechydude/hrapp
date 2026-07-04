@@ -28,20 +28,6 @@ class CustomUserCreationForm(UserCreationForm):
 
 
 
-# class StaffUserForm(forms.ModelForm):
-#     class Meta:
-#         model = User
-#         fields = ['first_name', 'last_name', 'username', 'email']
-
-# class StaffProfileForm(forms.ModelForm):
-#     class Meta:
-#         model = Staff
-#         exclude = ['user', 'created_by', 'updated_by', 'is_active', 'uuid', 'employee_no']
-#         widgets = {
-#             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
-#             'date_employed': forms.DateInput(attrs={'type': 'date'}),
-#             'confirmation_date': forms.DateInput(attrs={'type': 'date'}),
-
 
 """
 employees/forms.py

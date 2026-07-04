@@ -1,4 +1,4 @@
-{% extends "dashboard/base.html" %}
+{% extends "dashboard/base_employee.html" %}
 {% load static %}
 
 {% block title %}{{ staff.full_name }} — ID Card{% endblock %}
@@ -68,17 +68,17 @@
     <div class="page-subtitle">{{ staff.full_name }} · {{ staff.employee_no }}</div>
   </div>
   <div class="page-header-actions">
-    <a href="{% url 'idcards:print' staff_uuid=staff.uuid %}" target="_blank" class="btn btn-gold btn-sm">
+    <a href="{% url 'employees:print' staff_uuid=staff.uuid %}" target="_blank" class="btn btn-gold btn-sm">
       <i class="bi bi-printer-fill"></i> Print / Save as PDF
     </a>
-    <a href="{% url 'staff:detail' uuid=staff.uuid %}" class="btn btn-outline btn-sm">
+    <a href="{% url 'employees:detail' uuid=staff.uuid %}" class="btn btn-outline btn-sm">
       <i class="bi bi-arrow-left"></i> Back to Profile
     </a>
   </div>
 </div>
 {% endblock %}
 
-{% block content %}
+{% block page_content %}
 <div class="idcard-wrap">
 
   {# ══════════ Card preview ══════════ #}

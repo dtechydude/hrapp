@@ -1,4 +1,3 @@
-
 {% extends "dashboard/base.html" %}
 {% load static %}
 
@@ -71,9 +70,46 @@
 .form-grid-1 { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .col-span-2  { grid-column: span 2; }
 .col-span-3  { grid-column: span 3; }
+
+/* ── Overall page layout: main form + sidebar ──
+   Fixed 260px sidebar column collapses to a single stacked
+   column on tablets/phones so the form never gets squeezed. */
+.form-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 991px) {
+  .form-layout-grid { grid-template-columns: 1fr; }
+  /* Sidebar summary stacks below the form on tablet/mobile */
+  .form-summary { position: static; }
+}
+
 @media (max-width: 767px) {
   .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
   .col-span-2, .col-span-3   { grid-column: span 1; }
+
+  /* Reduce heavy desktop paddings so content isn't cramped */
+  .tab-panel      { padding: 18px 16px; }
+  .steps-row      { padding: 12px 16px; }
+  .form-tabs .tab-btn { padding: 12px 14px; font-size: .78rem; }
+  .form-actions   { padding: 14px 16px; }
+
+  /* Stack action buttons full-width, Save above Cancel */
+  .form-actions { flex-direction: column; align-items: stretch; }
+  .form-actions-right { flex-direction: column-reverse; width: 100%; }
+  .form-actions-right .btn { width: 100%; justify-content: center; }
+
+  /* Step indicator: keep compact and legible */
+  .step-pill  { font-size: .7rem; }
+  .step-arrow { margin: 0 4px; }
+}
+
+@media (max-width: 480px) {
+  .tab-panel      { padding: 14px 12px; }
+  .form-summary   { padding: 18px; }
+  .form-tabs .tab-btn { font-size: .74rem; padding: 10px 12px; }
 }
 
 /* ── Password strength meter ── */
@@ -212,7 +248,7 @@
 {% endif %}
 {% endwith %}
 
-<div style="display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start">
+<div class="form-layout-grid">
 
   {# ══════════ MAIN FORM CARD ══════════ #}
   <div class="card section-mb">
@@ -609,16 +645,16 @@
         </div>
       </div>
       <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px">
-        <form method="post" action="{% url 'staff:toggle_status' uuid=staff.uuid %}"
+        <form method="post" action="{% url 'employees:toggle_status' uuid=staff.uuid %}"
               onsubmit="return confirm('Are you sure you want to {% if staff.employment_status == 'Active' %}suspend{% else %}reinstate{% endif %} this staff member?')">
           {% csrf_token %}
           <button type="submit" class="btn btn-outline btn-sm w-full"
                   style="color:var(--amber);border-color:var(--amber)">
-            <i class="bi bi-{% if staff.employment_status == 'Active' %}pause-circle{% else %}play-circle{% endif %}"></i>
-            {% if staff.employment_status == 'Active' %}Suspend Staff{% else %}Reinstate Staff{% endif %}
+            <i class="bi bi-{% if employees.employment_status == 'Active' %}pause-circle{% else %}play-circle{% endif %}"></i>
+            {% if employees.employment_status == 'Active' %}Suspend Staff{% else %}Reinstate Staff{% endif %}
           </button>
         </form>
-        <form method="post" action="{% url 'staff:deactivate' uuid=staff.uuid %}"
+        <form method="post" action="{% url 'employees:deactivate' uuid=staff.uuid %}"
               onsubmit="return confirm('This will permanently deactivate this staff account and revoke login access. This cannot be undone from the portal. Continue?')">
           {% csrf_token %}
           <button type="submit" class="btn btn-outline btn-sm w-full"

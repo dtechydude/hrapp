@@ -1,9 +1,739 @@
-<!DOCTYPE html>
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{# ═══════════════════════════════════════════════════════════
+   HRPAMS — Main Dashboard
+   Extends base.html. All shell markup (sidebar, topbar, notif
+   dropdown, footer, sidebar/notif JS) lives in base.html.
+   This file supplies ONLY the page-specific blocks.
+═══════════════════════════════════════════════════════════ #}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{# Highlight "Dashboard" as the active item in the sidebar #}
+{% block nav_dashboard %}active{% endblock %}
+
+{# Optional per-page topbar control (period filter) #}
+{% block topbar_extra %}
+  <select class="period-select" title="Filter period" name="period" onchange="this.form ? this.form.submit() : null">
+    <option {% if selected_period == 'nov-2025' %}selected{% endif %} value="nov-2025">Nov 2025</option>
+    <option {% if selected_period == 'oct-2025' %}selected{% endif %} value="oct-2025">Oct 2025</option>
+    <option {% if selected_period == 'sep-2025' %}selected{% endif %} value="sep-2025">Sep 2025</option>
+    <option {% if selected_period == 'q3-2025' %}selected{% endif %} value="q3-2025">Q3 2025</option>
+  </select>
+{% endblock %}
+
+{# Dashboard-specific notifications preview shown in the topbar dropdown.
+   In production, loop over a `recent_notifications` queryset passed from
+   the DashboardView instead of the static items below. #}
+{% block notification_items %}
+  {% if recent_notifications %}
+    {% for note in recent_notifications %}
+      <div class="notif-item {% if not note.is_read %}unread{% endif %}">
+        <span class="notif-icon">{{ note.icon|default:"🔔" }}</span>
+        <div class="notif-body">
+          <div class="nt">{{ note.message|safe }}</div>
+          <div class="ns">{{ note.created_at|timesince }} ago · {{ note.module }}</div>
+        </div>
+        {% if not note.is_read %}<div class="notif-unread-dot"></div>{% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="notif-item unread">
+      <span class="notif-icon">💰</span>
+      <div class="notif-body">
+        <div class="nt"><strong>Payroll for November 2025</strong> is ready for approval.</div>
+        <div class="ns">2 minutes ago · Payroll Module</div>
+      </div>
+      <div class="notif-unread-dot"></div>
+    </div>
+    <div class="notif-item unread">
+      <span class="notif-icon">📋</span>
+      <div class="notif-body">
+        <div class="nt"><strong>Chukwu Daniel</strong> submitted a leave request (Annual Leave).</div>
+        <div class="ns">18 minutes ago · Leave Management</div>
+      </div>
+      <div class="notif-unread-dot"></div>
+    </div>
+    <div class="notif-item unread">
+      <span class="notif-icon">⚠️</span>
+      <div class="notif-body">
+        <div class="nt"><strong>3 client contracts</strong> expire within the next 14 days.</div>
+        <div class="ns">1 hour ago · Organizations</div>
+      </div>
+      <div class="notif-unread-dot"></div>
+    </div>
+    <div class="notif-item">
+      <span class="notif-icon">🎂</span>
+      <div class="notif-body">
+        <div class="nt"><strong>Ngozi Eze</strong> has a birthday tomorrow.</div>
+        <div class="ns">Yesterday · HR</div>
+      </div>
+    </div>
+    <div class="notif-item">
+      <span class="notif-icon">💳</span>
+      <div class="notif-body">
+        <div class="nt"><strong>Emeka Obi's</strong> loan balance is now ₦0 — fully repaid.</div>
+        <div class="ns">2 days ago · Loans</div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+  <!-- ── Page header ── -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">Good {{ time_of_day|default:"morning" }}, {{ request.user.first_name|default:request.user.username }} 👋</div>
+      <div class="page-subtitle">Here's what's happening with your workforce today — {% now "l, j F Y" %}</div>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-outline"><i class="bi bi-download"></i> Export</button>
+      <button class="btn btn-gold"><i class="bi bi-plus-lg"></i> <a href="{% url 'employees:add-employee' %}"> Add Staff </a></button>
+    </div>
+  </div>
+
+  <!-- ── KPI Cards ──
+       Replace the |default: fallback values with real context
+       variables from DashboardView.get_context_data(). -->
+  <div class="kpi-grid section-mb">
+
+    <div class="kpi-card c-navy">
+      <div class="kpi-top">
+        <div class="kpi-icon c-navy"><i class="bi bi-people-fill"></i></div>
+        <span class="kpi-trend up"><i class="bi bi-arrow-up-short"></i>{{ active_staff_trend|default:"+12" }}</span>
+      </div>
+      <div class="kpi-value">{{ total_active_staff|default:"1,248" }}</div>
+      <div class="kpi-label">Total Active Staff</div>
+      <div class="kpi-sub">Across {{ total_organizations|default:"43" }} client organizations</div>
+    </div>
+
+    <div class="kpi-card c-gold">
+      <div class="kpi-top">
+        <div class="kpi-icon c-gold"><i class="bi bi-cash-stack"></i></div>
+        <span class="kpi-trend flat">Pending</span>
+      </div>
+      <div class="kpi-value">{{ current_payroll_gross|default:"₦82.4M" }}</div>
+      <div class="kpi-label">{{ current_payroll_month|default:"November" }} Payroll</div>
+      <div class="kpi-sub">Awaiting HR Manager approval</div>
+    </div>
+
+    <div class="kpi-card c-green">
+      <div class="kpi-top">
+        <div class="kpi-icon c-green"><i class="bi bi-building-check"></i></div>
+        <span class="kpi-trend up"><i class="bi bi-arrow-up-short"></i>{{ new_organizations_trend|default:"+2" }}</span>
+      </div>
+      <div class="kpi-value">{{ total_organizations|default:"43" }}</div>
+      <div class="kpi-label">Client Organizations</div>
+      <div class="kpi-sub">{{ new_organizations_this_month|default:"2" }} new contracts this month</div>
+    </div>
+
+    <div class="kpi-card c-blue">
+      <div class="kpi-top">
+        <div class="kpi-icon c-blue"><i class="bi bi-calendar2-check"></i></div>
+        <span class="kpi-trend flat">{{ staff_on_leave|default:"17" }} active</span>
+      </div>
+      <div class="kpi-value">{{ staff_on_leave|default:"17" }}</div>
+      <div class="kpi-label">Staff on Leave</div>
+      <div class="kpi-sub">{{ leave_pending_today|default:"3" }} pending approval today</div>
+    </div>
+
+    <div class="kpi-card c-red">
+      <div class="kpi-top">
+        <div class="kpi-icon c-red"><i class="bi bi-person-x-fill"></i></div>
+        <span class="kpi-trend down"><i class="bi bi-arrow-down-short"></i>{{ suspended_staff_trend|default:"-3" }}</span>
+      </div>
+      <div class="kpi-value">{{ suspended_staff|default:"8" }}</div>
+      <div class="kpi-label">Suspended Staff</div>
+      <div class="kpi-sub">{{ reinstatement_pending|default:"2" }} pending reinstatement review</div>
+    </div>
+
+    <div class="kpi-card c-amber">
+      <div class="kpi-top">
+        <div class="kpi-icon c-amber"><i class="bi bi-bank2"></i></div>
+        <span class="kpi-trend down"><i class="bi bi-arrow-down-short"></i>{{ loan_recovery_trend|default:"₦1.2M" }}</span>
+      </div>
+      <div class="kpi-value">{{ outstanding_loans|default:"₦14.7M" }}</div>
+      <div class="kpi-label">Outstanding Loans</div>
+      <div class="kpi-sub">Across {{ active_loan_accounts|default:"87" }} active loan accounts</div>
+    </div>
+
+    <div class="kpi-card c-purple">
+      <div class="kpi-top">
+        <div class="kpi-icon c-purple"><i class="bi bi-person-check-fill"></i></div>
+        <span class="kpi-trend up"><i class="bi bi-arrow-up-short"></i>{{ new_hires_trend|default:"+5" }}</span>
+      </div>
+      <div class="kpi-value">{{ new_hires_this_month|default:"23" }}</div>
+      <div class="kpi-label">New Hires ({{ current_month_short|default:"Nov" }})</div>
+      <div class="kpi-sub">{{ pending_onboarding_docs|default:"4" }} pending onboarding docs</div>
+    </div>
+
+    <div class="kpi-card c-teal">
+      <div class="kpi-top">
+        <div class="kpi-icon c-teal"><i class="bi bi-clock-history"></i></div>
+        <span class="kpi-trend flat">Today</span>
+      </div>
+      <div class="kpi-value">{{ attendance_rate|default:"94.2%" }}</div>
+      <div class="kpi-label">Attendance Rate</div>
+      <div class="kpi-sub">{{ absent_today|default:"75" }} absent, {{ late_today|default:"3" }} late arrivals</div>
+    </div>
+
+  </div><!-- /kpi-grid -->
+
+  <!-- ── Payroll Chart + Activity ── -->
+  <div class="grid-3 section-mb">
+
+    <!-- Payroll Bar Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-bar-chart-fill"></i> Monthly Payroll vs Deductions</div>
+        <button class="btn btn-outline btn-sm"><i class="bi bi-download"></i> Export</button>
+      </div>
+      <div class="chart-legend">
+        <span><span class="legend-dot" style="background:var(--navy)"></span>Gross Payroll</span>
+        <span><span class="legend-dot" style="background:var(--gold)"></span>Net Paid</span>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-inner">
+          <div class="chart-yaxis">
+            <span>100M</span>
+            <span>75M</span>
+            <span>50M</span>
+            <span>25M</span>
+            <span>0</span>
+          </div>
+          <div style="flex:1">
+            <div class="chart-bars" id="payrollChart">
+              <!-- Bars rendered by JS below from `payrollChartData` -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-stat-row">
+        <div class="mini-stat">
+          <div class="msv">{{ current_payroll_gross|default:"₦82.4M" }}</div>
+          <div class="msl">Gross ({{ current_month_short|default:"Nov" }})</div>
+        </div>
+        <div class="mini-stat">
+          <div class="msv">{{ current_payroll_deductions|default:"₦9.8M" }}</div>
+          <div class="msl">Total Deductions</div>
+        </div>
+        <div class="mini-stat">
+          <div class="msv">{{ current_payroll_net|default:"₦72.6M" }}</div>
+          <div class="msl">Net Payable</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Feed -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-activity"></i> Recent Activity</div>
+        <button class="btn btn-outline btn-sm">View all</button>
+      </div>
+      <div class="activity-list">
+        {% if recent_activities %}
+          {% for activity in recent_activities %}
+            <div class="activity-item">
+              <div class="activity-icon" style="background:{{ activity.icon_bg }};color:{{ activity.icon_color }}"><i class="bi {{ activity.icon }}"></i></div>
+              <div class="activity-body">
+                <div class="activity-text">{{ activity.text|safe }}</div>
+                <div class="activity-time">{{ activity.created_at|timesince }} ago · {{ activity.actor }}</div>
+              </div>
+              <span class="activity-badge pill {{ activity.status_class }}">{{ activity.status_label }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="activity-item">
+            <div class="activity-icon" style="background:var(--green-bg);color:var(--green)"><i class="bi bi-person-plus-fill"></i></div>
+            <div class="activity-body">
+              <div class="activity-text"><strong>Bola Adeyemi</strong> was onboarded and deployed to Zenith Bank Plc.</div>
+              <div class="activity-time">9 minutes ago · by HR Manager</div>
+            </div>
+            <span class="activity-badge pill active">New</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon" style="background:var(--gold-muted);color:var(--gold)"><i class="bi bi-cash-coin"></i></div>
+            <div class="activity-body">
+              <div class="activity-text">November 2025 payroll generated — <strong>1,248 staff</strong>, ₦82.4M gross.</div>
+              <div class="activity-time">42 minutes ago · by Payroll Officer</div>
+            </div>
+            <span class="activity-badge pill pending">Pending</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon" style="background:var(--blue-bg);color:var(--blue)"><i class="bi bi-calendar2-check"></i></div>
+            <div class="activity-body">
+              <div class="activity-text"><strong>Chukwu Daniel</strong> requested 5 days annual leave (Dec 2–6).</div>
+              <div class="activity-time">1 hour ago · Leave Management</div>
+            </div>
+            <span class="activity-badge pill pending">Review</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon" style="background:var(--teal-bg);color:var(--teal)"><i class="bi bi-arrow-up-circle-fill"></i></div>
+            <div class="activity-body">
+              <div class="activity-text"><strong>Ngozi Eze</strong> promoted to Senior Officer — salary adjusted to ₦185,000.</div>
+              <div class="activity-time">3 hours ago · by HR Manager</div>
+            </div>
+            <span class="activity-badge pill approved">Done</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon" style="background:var(--red-bg);color:var(--red)"><i class="bi bi-slash-circle-fill"></i></div>
+            <div class="activity-body">
+              <div class="activity-text"><strong>Tunde Akintola</strong> suspended pending disciplinary investigation.</div>
+              <div class="activity-time">Yesterday 4:12 PM · by HR Manager</div>
+            </div>
+            <span class="activity-badge pill suspended">Alert</span>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon" style="background:var(--purple-bg);color:var(--purple)"><i class="bi bi-bank"></i></div>
+            <div class="activity-body">
+              <div class="activity-text"><strong>₦45,000</strong> loan deduction processed for Emeka Obi — balance ₦0.</div>
+              <div class="activity-time">Yesterday 2:00 PM · Payroll</div>
+            </div>
+            <span class="activity-badge pill locked">Closed</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- /grid-3 -->
+
+  <!-- ── Staff Table + Quick Actions ── -->
+  <div class="grid-3 section-mb">
+
+    <!-- Recent Staff -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-people-fill"></i> Recently Active Staff</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-sm"><i class="bi bi-funnel"></i> Filter</button>
+          <button class="btn btn-primary btn-sm"><i class="bi bi-arrow-right"></i> All Staff</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Staff</th>
+              <th>Organization</th>
+              <th>Grade</th>
+              <th>Salary</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if recent_staff %}
+              {% for staff in recent_staff %}
+                <tr>
+                  <td>
+                    <div class="staff-cell">
+                      <div class="staff-avatar" style="background:{{ staff.avatar_bg }};color:{{ staff.avatar_color }}">{{ staff.initials }}</div>
+                      <div>
+                        <div class="staff-name">{{ staff.full_name }}</div>
+                        <div class="staff-id">{{ staff.employment_number }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ staff.organization.name }}</td>
+                  <td>{{ staff.grade_level }} / Step {{ staff.step }}</td>
+                  <td>₦{{ staff.current_salary|floatformat:0 }}</td>
+                  <td><span class="pill {{ staff.status_class }}">{{ staff.get_status_display }}</span></td>
+                  <td><a href="{% url 'staff:detail' staff.pk %}" class="btn btn-icon btn-xs"><i class="bi bi-eye"></i></a></td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td><div class="staff-cell"><div class="staff-avatar" style="background:#EFF6FF;color:#3B82F6">BO</div><div><div class="staff-name">Bola Adeyemi</div><div class="staff-id">EMP-2025-1248</div></div></div></td>
+                <td>Zenith Bank Plc</td>
+                <td>GL 8 / Step 3</td>
+                <td>₦145,000</td>
+                <td><span class="pill active">Active</span></td>
+                <td><button class="btn btn-icon btn-xs"><i class="bi bi-eye"></i></button></td>
+              </tr>
+              <tr>
+                <td><div class="staff-cell"><div class="staff-avatar" style="background:#F0FDF4;color:#22C55E">NE</div><div><div class="staff-name">Ngozi Eze</div><div class="staff-id">EMP-2023-0874</div></div></div></td>
+                <td>GTBank</td>
+                <td>GL 10 / Step 1</td>
+                <td>₦185,000</td>
+                <td><span class="pill active">Active</span></td>
+                <td><button class="btn btn-icon btn-xs"><i class="bi bi-eye"></i></button></td>
+              </tr>
+              <tr>
+                <td><div class="staff-cell"><div class="staff-avatar" style="background:#FEF2F2;color:#EF4444">TA</div><div><div class="staff-name">Tunde Akintola</div><div class="staff-id">EMP-2021-0412</div></div></div></td>
+                <td>Access Bank</td>
+                <td>GL 7 / Step 5</td>
+                <td>₦120,000</td>
+                <td><span class="pill suspended">Suspended</span></td>
+                <td><button class="btn btn-icon btn-xs"><i class="bi bi-eye"></i></button></td>
+              </tr>
+              <tr>
+                <td><div class="staff-cell"><div class="staff-avatar" style="background:#EFF6FF;color:#3B82F6">CD</div><div><div class="staff-name">Chukwu Daniel</div><div class="staff-id">EMP-2022-0631</div></div></div></td>
+                <td>First Bank</td>
+                <td>GL 9 / Step 2</td>
+                <td>₦162,000</td>
+                <td><span class="pill on-leave">On Leave</span></td>
+                <td><button class="btn btn-icon btn-xs"><i class="bi bi-eye"></i></button></td>
+              </tr>
+              <tr>
+                <td><div class="staff-cell"><div class="staff-avatar" style="background:#F5F3FF;color:#8B5CF6">AM</div><div><div class="staff-name">Amaka Musa</div><div class="staff-id">EMP-2020-0198</div></div></div></td>
+                <td>UBA</td>
+                <td>GL 11 / Step 4</td>
+                <td>₦210,000</td>
+                <td><span class="pill active">Active</span></td>
+                <td><button class="btn btn-icon btn-xs"><i class="bi bi-eye"></i></button></td>
+              </tr>
+              <tr>
+                <td><div class="staff-cell"><div class="staff-avatar" style="background:#FFF7ED;color:#F59E0B">EO</div><div><div class="staff-name">Emeka Obi</div><div class="staff-id">EMP-2019-0087</div></div></div></td>
+                <td>Stanbic IBTC</td>
+                <td>GL 12 / Step 2</td>
+                <td>₦240,000</td>
+                <td><span class="pill active">Active</span></td>
+                <td><button class="btn btn-icon btn-xs"><i class="bi bi-eye"></i></button></td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick Actions + Payroll Donut -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <!-- Quick Actions -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="bi bi-lightning-charge-fill"></i> Quick Actions</div>
+        </div>
+        <div class="quick-grid">
+          <a href="#" class="quick-item">
+            <div class="quick-icon" style="background:var(--green-bg);color:var(--green)"><i class="bi bi-person-plus-fill"></i></div>
+            <div class="quick-label">Add New Staff</div>
+          </a>
+          <a href="#" class="quick-item">
+            <div class="quick-icon" style="background:var(--gold-muted);color:var(--gold)"><i class="bi bi-cash-stack"></i></div>
+            <div class="quick-label">Run Payroll</div>
+          </a>
+          <a href="#" class="quick-item">
+            <div class="quick-icon" style="background:var(--blue-bg);color:var(--blue)"><i class="bi bi-calendar2-plus"></i></div>
+            <div class="quick-label">Approve Leave</div>
+          </a>
+          <a href="#" class="quick-item">
+            <div class="quick-icon" style="background:var(--purple-bg);color:var(--purple)"><i class="bi bi-bank2"></i></div>
+            <div class="quick-label">New Loan</div>
+          </a>
+          <a href="#" class="quick-item">
+            <div class="quick-icon" style="background:var(--teal-bg);color:var(--teal)"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+            <div class="quick-label">Print Payslip</div>
+          </a>
+          <a href="#" class="quick-item">
+            <div class="quick-icon" style="background:var(--red-bg);color:var(--red)"><i class="bi bi-person-dash-fill"></i></div>
+            <div class="quick-label">Suspend Staff</div>
+          </a>
+          <a href="#" class="quick-item">
+            <div class="quick-icon" style="background:rgba(11,29,58,.08);color:var(--navy)"><i class="bi bi-building-add"></i></div>
+            <div class="quick-label">Add Organization</div>
+          </a>
+          <a href="#" class="quick-item">
+            <div class="quick-icon" style="background:var(--amber-bg);color:var(--amber)"><i class="bi bi-bar-chart-fill"></i></div>
+            <div class="quick-label">View Reports</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Payroll Breakdown -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><i class="bi bi-pie-chart-fill"></i> Payroll Breakdown ({{ current_month_short|default:"Nov" }})</div>
+        </div>
+        <div class="donut-wrap">
+          <div class="donut">
+            <div class="donut-inner">
+              <div class="dv">{{ payroll_processed_pct|default:"88%" }}</div>
+              <div class="dl">Processed</div>
+            </div>
+          </div>
+          <div class="donut-legend">
+            <div class="dl-item"><div class="dl-dot" style="background:var(--navy)"></div><span class="dl-label">Basic + Allowances</span><span class="dl-val">{{ payroll_basic_allowances|default:"₦62.1M" }}</span></div>
+            <div class="dl-item"><div class="dl-dot" style="background:var(--gold)"></div><span class="dl-label">Statutory Deductions</span><span class="dl-val">{{ payroll_statutory_deductions|default:"₦14.3M" }}</span></div>
+            <div class="dl-item"><div class="dl-dot" style="background:var(--green)"></div><span class="dl-label">Loan Repayments</span><span class="dl-val">{{ payroll_loan_repayments|default:"₦5.9M" }}</span></div>
+            <div class="dl-item"><div class="dl-dot" style="background:var(--border)"></div><span class="dl-label">Pending Review</span><span class="dl-val">{{ payroll_pending_review|default:"₦0.2M" }}</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /grid-3 -->
+
+  <!-- ── Module Progress + Upcoming + Alerts ── -->
+  <div class="grid-2 section-mb">
+
+    <!-- Module Utilization -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-grid-fill"></i> Module Activity (This Month)</div>
+      </div>
+      <div class="prog-row" style="margin-top:16px">
+        {% if module_progress %}
+          {% for mod in module_progress %}
+            <div class="prog-item">
+              <div class="prog-top"><span class="prog-name">{{ mod.name }}</span><span class="prog-pct">{{ mod.pct }}%</span></div>
+              <div class="prog-track"><div class="prog-fill" style="width:{{ mod.pct }}%;background:{{ mod.color }}"></div></div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="prog-item">
+            <div class="prog-top"><span class="prog-name">Payroll Processing</span><span class="prog-pct">87%</span></div>
+            <div class="prog-track"><div class="prog-fill" style="width:87%;background:var(--navy)"></div></div>
+          </div>
+          <div class="prog-item">
+            <div class="prog-top"><span class="prog-name">Attendance Captured</span><span class="prog-pct">94%</span></div>
+            <div class="prog-track"><div class="prog-fill" style="width:94%;background:var(--green)"></div></div>
+          </div>
+          <div class="prog-item">
+            <div class="prog-top"><span class="prog-name">Loan Recovery Rate</span><span class="prog-pct">72%</span></div>
+            <div class="prog-track"><div class="prog-fill" style="width:72%;background:var(--amber)"></div></div>
+          </div>
+          <div class="prog-item">
+            <div class="prog-top"><span class="prog-name">Leave Requests Resolved</span><span class="prog-pct">65%</span></div>
+            <div class="prog-track"><div class="prog-fill" style="width:65%;background:var(--blue)"></div></div>
+          </div>
+          <div class="prog-item">
+            <div class="prog-top"><span class="prog-name">Document Uploads Complete</span><span class="prog-pct">51%</span></div>
+            <div class="prog-track"><div class="prog-fill" style="width:51%;background:var(--purple)"></div></div>
+          </div>
+          <div class="prog-item">
+            <div class="prog-top"><span class="prog-name">Promotion Reviews Done</span><span class="prog-pct">33%</span></div>
+            <div class="prog-track"><div class="prog-fill" style="width:33%;background:var(--teal)"></div></div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-calendar-event-fill"></i> Upcoming Events &amp; Alerts</div>
+        <button class="btn btn-outline btn-sm">View Calendar</button>
+      </div>
+      <div class="upcoming-list">
+        {% if upcoming_events %}
+          {% for event in upcoming_events %}
+            <div class="upcoming-item">
+              <div class="upcoming-date-box" style="{% if event.highlight_bg %}background:{{ event.highlight_bg }};color:#fff{% endif %}">
+                <div class="ud">{{ event.date|date:"d" }}</div>
+                <div class="um">{{ event.date|date:"M" }}</div>
+              </div>
+              <div class="upcoming-info">
+                <div class="un">{{ event.title }}</div>
+                <div class="us">{{ event.description }}</div>
+              </div>
+              <span class="upcoming-tag pill {{ event.tag_class }}">{{ event.days_remaining }} days</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="upcoming-item">
+            <div class="upcoming-date-box"><div class="ud">28</div><div class="um">Nov</div></div>
+            <div class="upcoming-info">
+              <div class="un">Ngozi Eze — Birthday 🎂</div>
+              <div class="us">Staff ID: EMP-2023-0874 · GTBank</div>
+            </div>
+            <span class="upcoming-tag pill active">Tomorrow</span>
+          </div>
+          <div class="upcoming-item">
+            <div class="upcoming-date-box" style="background:var(--red);color:#fff"><div class="ud">30</div><div class="um">Nov</div></div>
+            <div class="upcoming-info">
+              <div class="un">Payroll Approval Deadline</div>
+              <div class="us">November 2025 payroll must be locked by EOD</div>
+            </div>
+            <span class="upcoming-tag pill suspended">3 days</span>
+          </div>
+          <div class="upcoming-item">
+            <div class="upcoming-date-box" style="background:var(--amber);color:#fff"><div class="ud">05</div><div class="um">Dec</div></div>
+            <div class="upcoming-info">
+              <div class="un">Contract Expiry — Eco Bank</div>
+              <div class="us">87 staff at risk if not renewed</div>
+            </div>
+            <span class="upcoming-tag pill pending">8 days</span>
+          </div>
+          <div class="upcoming-item">
+            <div class="upcoming-date-box"><div class="ud">10</div><div class="um">Dec</div></div>
+            <div class="upcoming-info">
+              <div class="un">Emeka Obi — Confirmation Due</div>
+              <div class="us">Probation ends · GL review required</div>
+            </div>
+            <span class="upcoming-tag pill on-leave">13 days</span>
+          </div>
+          <div class="upcoming-item">
+            <div class="upcoming-date-box"><div class="ud">31</div><div class="um">Dec</div></div>
+            <div class="upcoming-info">
+              <div class="un">Annual Leave Carryover Cutoff</div>
+              <div class="us">Unused leave balances will be forfeited</div>
+            </div>
+            <span class="upcoming-tag pill draft">34 days</span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- /grid-2 -->
+
+  <!-- ── Payroll Approval Queue ── -->
+  <div class="card section-mb">
+    <div class="card-header">
+      <div class="card-title"><i class="bi bi-check2-circle"></i> Payroll Approval Queue</div>
+      <div style="display:flex;gap:8px">
+        <span class="pill pending" style="align-self:center">{{ payroll_pending_count|default:"1" }} Pending</span>
+        <button class="btn btn-gold btn-sm"><i class="bi bi-lock-fill"></i> Review &amp; Approve</button>
+      </div>
+    </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Payroll Run</th>
+            <th>Period</th>
+            <th>Staff Count</th>
+            <th>Gross Amount</th>
+            <th>Deductions</th>
+            <th>Net Payable</th>
+            <th>Generated By</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if payroll_runs %}
+            {% for run in payroll_runs %}
+              <tr>
+                <td><strong>{{ run.reference }}</strong></td>
+                <td>{{ run.period }}</td>
+                <td>{{ run.staff_count }}</td>
+                <td>₦{{ run.gross_amount|floatformat:0 }}</td>
+                <td>₦{{ run.deductions|floatformat:0 }}</td>
+                <td style="font-weight:700;color:var(--navy)">₦{{ run.net_payable|floatformat:0 }}</td>
+                <td>{{ run.generated_by }}</td>
+                <td><span class="pill {{ run.status_class }}">{{ run.get_status_display }}</span></td>
+                <td>
+                  {% if run.status == 'pending' %}
+                    <div style="display:flex;gap:6px">
+                      <a href="{% url 'payroll:review' run.pk %}" class="btn btn-outline btn-xs"><i class="bi bi-eye"></i> Review</a>
+                      <a href="{% url 'payroll:approve' run.pk %}" class="btn btn-gold btn-xs"><i class="bi bi-check-lg"></i> Approve</a>
+                      <a href="{% url 'payroll:reject' run.pk %}" class="btn btn-outline btn-xs" style="color:var(--red);border-color:var(--red)"><i class="bi bi-x-lg"></i></a>
+                    </div>
+                  {% else %}
+                    <a href="{% url 'payroll:download' run.pk %}" class="btn btn-outline btn-xs"><i class="bi bi-download"></i> Download</a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td><strong>PAY-2025-011</strong></td>
+              <td>November 2025</td>
+              <td>1,248</td>
+              <td>₦82,400,000</td>
+              <td>₦9,800,000</td>
+              <td style="font-weight:700;color:var(--navy)">₦72,600,000</td>
+              <td>Payroll Officer</td>
+              <td><span class="pill pending">Pending Approval</span></td>
+              <td>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-outline btn-xs"><i class="bi bi-eye"></i> Review</button>
+                  <button class="btn btn-gold btn-xs"><i class="bi bi-check-lg"></i> Approve</button>
+                  <button class="btn btn-outline btn-xs" style="color:var(--red);border-color:var(--red)"><i class="bi bi-x-lg"></i></button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>PAY-2025-010</strong></td>
+              <td>October 2025</td>
+              <td>1,236</td>
+              <td>₦80,700,000</td>
+              <td>₦9,500,000</td>
+              <td style="font-weight:700;color:var(--navy)">₦71,200,000</td>
+              <td>Payroll Officer</td>
+              <td><span class="pill locked">Locked &amp; Paid</span></td>
+              <td><button class="btn btn-outline btn-xs"><i class="bi bi-download"></i> Download</button></td>
+            </tr>
+            <tr>
+              <td><strong>PAY-2025-009</strong></td>
+              <td>September 2025</td>
+              <td>1,221</td>
+              <td>₦79,100,000</td>
+              <td>₦9,200,000</td>
+              <td style="font-weight:700;color:var(--navy)">₦69,900,000</td>
+              <td>Payroll Officer</td>
+              <td><span class="pill locked">Locked &amp; Paid</span></td>
+              <td><button class="btn btn-outline btn-xs"><i class="bi bi-download"></i> Download</button></td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block extra_js %}
+{# Chart data handed off to JS safely via json_script (avoids inline
+   JSON-in-<script> injection issues). DashboardView should pass
+   `payroll_chart_data` as a list of {month, gross, net} dicts;
+   this renders an empty/None script tag when the context key is
+   absent, and the JS below falls back to demo figures in that case. #}
+{{ payroll_chart_data|json_script:"payroll-chart-data" }}
+<script>
+/* ══════════════════════════════════════════
+   PAYROLL BAR CHART (pure CSS bars via JS)
+   Sidebar/topbar/notification JS already lives in base.html —
+   only the chart-rendering logic for this page belongs here.
+══════════════════════════════════════════ */
+const FALLBACK_PAYROLL_CHART_DATA = [
+  { month: 'Jun', gross: 74, net: 64 },
+  { month: 'Jul', gross: 76, net: 66 },
+  { month: 'Aug', gross: 75, net: 65 },
+  { month: 'Sep', gross: 79, net: 70 },
+  { month: 'Oct', gross: 81, net: 71 },
+  { month: 'Nov', gross: 82, net: 73 },
+];
+
+const chartDataEl = document.getElementById('payroll-chart-data');
+let payrollChartData = FALLBACK_PAYROLL_CHART_DATA;
+if (chartDataEl) {
+  try {
+    const parsed = JSON.parse(chartDataEl.textContent);
+    if (Array.isArray(parsed) && parsed.length) payrollChartData = parsed;
+  } catch (e) { /* keep fallback */ }
+}
+
+const PAYROLL_CHART_MAX = 100; // scale, in millions
+
+const payrollChartEl = document.getElementById('payrollChart');
+payrollChartData.forEach(d => {
+  const grossH = Math.round((d.gross / PAYROLL_CHART_MAX) * 160);
+  const netH   = Math.round((d.net   / PAYROLL_CHART_MAX) * 160);
+  payrollChartEl.insertAdjacentHTML('beforeend', `
+    <div class="bar-group">
+      <div class="bar-pair">
+        <div class="bar b-navy" style="height:${grossH}px" title="Gross ₦${d.gross}M"></div>
+        <div class="bar b-gold"  style="height:${netH}px"   title="Net ₦${d.net}M"></div>
+      </div>
+      <div class="bar-label">${d.month}</div>
+    </div>`);
+});
+</script>
+{% endblock %}
+
+
+{% comment %} <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HRPAMS — Dashboard</title>
+  <title>HRPAMS - Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
@@ -2129,4 +2859,4 @@ payrollData.forEach(d => {
 </script>
 
 </body>
-</html>
+</html> {% endcomment %}

@@ -1,35 +1,3 @@
-{% comment %} {# ═══════════════════════════════════════════════════════════════════════
-   HRPAMS — Employee Self-Service Base Template
-   File   : templates/base_employee.html
-   Extends: Nothing (root template for employee-facing pages only)
-   Usage  : {% extends "base_employee.html" %}
-
-   This is a DELIBERATELY STRIPPED-DOWN sibling of base.html.
-   It shares the same design tokens (hrpams.css) and app-shell mechanics
-   (sidebar collapse, notification/user dropdowns, toast messages — same
-   hrpams.js) but the sidebar carries ONLY the links a regular staff
-   member (is_staff=False) is allowed to see: their own dashboard,
-   profile, payslips, leave, loans, ID card, documents, and account
-   settings. None of the HR/Payroll/Accounting/System admin menus render
-   here — this is what makes the employee experience feel like a personal
-   portal rather than the management console.
-
-   Blocks exposed to child templates (same contract as base.html)
-   ──────────────────────────────────────────────────────────────────────
-   {% block title %}          — <title> content
-   {% block extra_css %}      — page-specific <style> tags
-   {% block breadcrumb %}     — text shown in topbar breadcrumb
-   {% block page_header %}    — page title + subtitle + action buttons
-   {% block page_content %}   — MAIN content area (required)
-   {% block extra_js %}       — page-specific <script> tags
-
-   Named URLs this template expects to exist
-   ──────────────────────────────────────────────────────────────────────
-     dashboard:home          accounts:profile        accounts:change_password
-     staff:detail            payroll:my_payslips     leave:my_requests
-     idcards:view            loan:my_loans           documents:my_documents
-     accounts:logout         notifications:list
-   ═══════════════════════════════════════════════════════════════════════ #} {% endcomment %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -43,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
-  <link rel="stylesheet" href="{% static 'css/hrpams.css' %}" />
+  <link rel="stylesheet" href="{% static 'dashboard/css/hrpams.css' %}" />
 
   <style>
   /* ── App shell — identical mechanics to base.html, kept in sync ── */
@@ -178,15 +146,15 @@
 
   <div class="sb-overlay" id="sbOverlay"></div>
 
-  {# ══════════════════════════════════════════════
+  {% comment %} {# ══════════════════════════════════════════════
      SIDEBAR — Employee Self-Service (deliberately minimal)
-  ══════════════════════════════════════════════ #}
+  ══════════════════════════════════════════════ #} {% endcomment %}
   <aside class="sidebar" id="sidebar">
 
     <a class="sb-brand" href="{% url 'dashboard:staff-home' %}">
       <div class="sb-brand-icon">HR</div>
       <div class="sb-brand-text">
-        <span class="name">HRPAMS</span>
+        <span class="name">{{ corporate_info.name }}</span>
         <span class="sub">Employee Portal</span>
       </div>
     </a>
@@ -226,16 +194,22 @@
       <div class="sb-group">Payroll &amp; Benefits</div>
 
       {% comment %} <a href="{% url 'payroll:my_payslips' %}" class="sb-item {% if 'payroll' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
+      <a href="#" class="sb-item {% if 'payroll' in request.resolver_match.namespace %}active{% endif %}">
+
         <i class="bi bi-cash-stack sb-icon"></i>
         <span class="sb-label">My Payslips</span>
       </a>
 
       {% comment %} <a href="{% url 'loan:my_loans' %}" class="sb-item {% if 'loan' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
+      <a href="#" class="sb-item {% if 'loan' in request.resolver_match.namespace %}active{% endif %}">
+
         <i class="bi bi-bank2 sb-icon"></i>
         <span class="sb-label">My Loans</span>
       </a>
 
       {% comment %} <a href="{% url 'leave:my_requests' %}" class="sb-item {% if 'leave' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
+      <a href="#" class="sb-item {% if 'leave' in request.resolver_match.namespace %}active{% endif %}">
+
         <i class="bi bi-calendar2-check sb-icon"></i>
         <span class="sb-label">My Leave</span>
       </a>
@@ -243,12 +217,16 @@
       <div class="sb-group">Records</div>
 
       {% comment %} <a href="{% url 'documents:my_documents' %}" class="sb-item {% if 'documents' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
+      <a href="#" class="sb-item {% if 'documents' in request.resolver_match.namespace %}active{% endif %}">
+
         <i class="bi bi-folder-fill sb-icon"></i>
         <span class="sb-label">My Documents</span>
       </a>
 
       {% comment %} <a href="{% url 'notifications:list' %}" class="sb-item {% if 'notifications' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
-        <i class="bi bi-bell-fill sb-icon"></i>
+      <a href="#" class="sb-item {% if 'notifications' in request.resolver_match.namespace %}active{% endif %}">
+  
+      <i class="bi bi-bell-fill sb-icon"></i>
         <span class="sb-label">Notifications</span>
         {% if unread_notification_count %}<span class="sb-badge">{{ unread_notification_count }}</span>{% endif %}
       </a>
@@ -256,7 +234,9 @@
       <div class="sb-group">Account</div>
 
       {% comment %} <a href="{% url 'accounts:change_password' %}" class="sb-item {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}"> {% endcomment %}
-        <i class="bi bi-lock-fill sb-icon"></i>
+      <a href="{% url 'password_reset' %}" class="sb-item {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}">
+ 
+      <i class="bi bi-lock-fill sb-icon"></i>
         <span class="sb-label">Change Password</span>
       </a>
 
