@@ -240,6 +240,10 @@
         <span class="sb-label">Change Password</span>
       </a>
 
+       <a href="{% url 'logout' %}" class="ud-item danger">
+        <i class="bi bi-box-arrow-right"></i> Sign Out
+      </a>
+
     </nav>
 
     <button class="sb-collapse-btn" id="collapseBtn" title="Toggle sidebar">
@@ -326,6 +330,76 @@
 </div>
 
 <script src="{% static 'js/hrpams.js' %}"></script>
+<script>
+/* ══════════════════════════════════════════
+   SIDEBAR: hamburger + collapse + mobile
+   (Ported from base.html — this block was missing here entirely,
+   which is why the hamburger button did nothing.)
+══════════════════════════════════════════ */
+(function() {
+  const sidebar      = document.getElementById('sidebar');
+  const overlay      = document.getElementById('sbOverlay');
+  const hamburgerBtn = document.getElementById('hamburgerBtn');
+  const collapseBtn  = document.getElementById('collapseBtn');
+  const collapseIcon = document.getElementById('collapseIcon');
+  if (!sidebar || !hamburgerBtn) return;
+
+  const isMobile = () => window.innerWidth < 1024;
+  let isCollapsed = false;
+
+  hamburgerBtn.addEventListener('click', () => {
+    if (isMobile()) {
+      sidebar.classList.toggle('mobile-open');
+      if (overlay) overlay.classList.toggle('active');
+    } else {
+      isCollapsed = !isCollapsed;
+      sidebar.classList.toggle('collapsed', isCollapsed);
+      if (collapseIcon) {
+        collapseIcon.className = isCollapsed
+          ? 'bi bi-chevron-double-right'
+          : 'bi bi-chevron-double-left';
+      }
+    }
+  });
+
+  if (collapseBtn) {
+    collapseBtn.addEventListener('click', () => {
+      isCollapsed = !isCollapsed;
+      sidebar.classList.toggle('collapsed', isCollapsed);
+      if (collapseIcon) {
+        collapseIcon.className = isCollapsed
+          ? 'bi bi-chevron-double-right'
+          : 'bi bi-chevron-double-left';
+      }
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('active');
+    });
+  }
+
+  /* Close the mobile drawer automatically after tapping a nav link,
+     so users aren't stuck staring at the sidebar after navigating. */
+  sidebar.querySelectorAll('.sb-item, .sb-sub-item').forEach(link => {
+    link.addEventListener('click', () => {
+      if (isMobile()) {
+        sidebar.classList.remove('mobile-open');
+        if (overlay) overlay.classList.remove('active');
+      }
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    if (!isMobile()) {
+      sidebar.classList.remove('mobile-open');
+      if (overlay) overlay.classList.remove('active');
+    }
+  });
+})();
+</script>
 <script>
 (function() {
   const btn = document.getElementById('userMenuBtn');

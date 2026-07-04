@@ -232,44 +232,6 @@ class StaffUpdateView(StaffManagerRequiredMixin, View):
 
         return self._render(request, user_form, profile_form, staff)
 
-    # def _render(self, request, user_form, profile_form, staff):
-    #     from django.shortcuts import render
-
-    #     return render(request, self.template_name, {
-    #         "user_form":    user_form,
-    #         "profile_form": profile_form,
-    #         "staff":        staff,
-    #         "is_create":    False,
-    #         "page_title":   f"Edit — {staff.full_name}",
-    #         "page_subtitle": f"Employee No: {staff.employee_no}",
-    #         "breadcrumb":   "Edit Staff",
-    #     })
-
-    # def _render(self, request, user_form, profile_form):
-    #     from django.shortcuts import render
-
-    #     required_fields = [
-    #         "First Name",
-    #         "Last Name",
-    #         "Username",
-    #         "Gender",
-    #         "Date of Birth",
-    #         "State of Origin",
-    #         "Mobile Phone",
-    #         "Employment Type",
-    #         "Employment Status",
-    #         "Date Employed",
-    #     ]
-
-    #     return render(request, self.template_name, {
-    #         "user_form": user_form,
-    #         "profile_form": profile_form,
-    #         "is_create": True,
-    #         "page_title": "Add New Staff",
-    #         "page_subtitle": "Complete all required sections to register a new staff member.",
-    #         "breadcrumb": "Add New Staff",
-    #         "required_fields": required_fields,
-    #     })
 
     def _render(self, request, user_form, profile_form, staff):
         from django.shortcuts import render
@@ -306,38 +268,77 @@ class StaffUpdateView(StaffManagerRequiredMixin, View):
             },
         )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Staff Detail
 # ─────────────────────────────────────────────────────────────────────────────
 
-class StaffDetailView(OwnProfileOrStaffMixin, DetailView):
-    """
-    Read-only staff profile page.
-    URL: /staff/<uuid>/
-    """
+# class StaffDetailView(OwnProfileOrStaffMixin, DetailView):
+#     """
+#     Read-only staff profile page.
+#     URL: /staff/<uuid>/
+#     """
 
+#     model = Staff
+#     template_name     = "employees/staff_detail.html"
+#     context_object_name = "staff"
+#     slug_field        = "uuid"
+#     slug_url_kwarg    = "uuid"
+
+#     def get_queryset(self):
+#         return Staff.objects.select_related(
+#             "user", "staff_rank", "created_by", "updated_by"
+#         ).prefetch_related("deployments__company", "deployments__department")
+
+#     def get_context_data(self, **kwargs):
+#         ctx = super().get_context_data(**kwargs)
+#         staff = self.object
+#         ctx["page_title"]    = staff.full_name
+#         ctx["page_subtitle"] = f"Employee No: {staff.employee_no}"
+#         ctx["breadcrumb"]    = "Staff Profile"
+#         ctx["can_edit"]      = (
+#             self.request.user.is_staff or self.request.user.is_superuser
+#         )
+#         ctx["deployment"] = staff.current_deployment
+#         return ctx
+
+
+class StaffDetailView(OwnProfileOrStaffMixin, DetailView):
     model = Staff
-    template_name     = "employees/staff_detail.html"
     context_object_name = "staff"
-    slug_field        = "uuid"
-    slug_url_kwarg    = "uuid"
+    slug_field = "uuid"
+    slug_url_kwarg = "uuid"
+
+    def get_template_names(self):
+        if self.request.user.is_staff or self.request.user.is_superuser:
+            return ["employees/staff_detail.html"]          # extends dashboard/base.html
+        return ["employees/staff_detail_self.html"]     # extends dashboard/base_employee.html
 
     def get_queryset(self):
-        return Staff.objects.select_related(
-            "user", "staff_rank", "created_by", "updated_by"
-        ).prefetch_related("deployments__company", "deployments__department")
+        return (
+            Staff.objects.select_related(
+                "user",
+                "staff_rank",
+                "created_by",
+                "updated_by",
+            )
+            .prefetch_related(
+                "deployments__company",
+                "deployments__department",
+            )
+        )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         staff = self.object
-        ctx["page_title"]    = staff.full_name
+
+        ctx["page_title"] = staff.full_name
         ctx["page_subtitle"] = f"Employee No: {staff.employee_no}"
-        ctx["breadcrumb"]    = "Staff Profile"
-        ctx["can_edit"]      = (
+        ctx["breadcrumb"] = "Staff Profile"
+        ctx["deployment"] = staff.current_deployment
+        ctx["can_edit"] = (
             self.request.user.is_staff or self.request.user.is_superuser
         )
-        ctx["deployment"] = staff.current_deployment
+
         return ctx
 
 

@@ -59,32 +59,67 @@ class SuperuserRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+# class OwnProfileOrStaffMixin(LoginRequiredMixin):
+#     """
+#     Allow staff managers full access.
+#     Allow regular staff to view/edit their own profile only.
+#     """
+
+#     def dispatch(self, request, *args, **kwargs):
+#         if not request.user.is_authenticated:
+#             return self.handle_no_permission()
+
+#         # Staff managers see everything
+#         if request.user.is_staff or request.user.is_superuser:
+#             return super().dispatch(request, *args, **kwargs)
+
+#         # Regular user: only their own profile
+#         obj_uuid = kwargs.get("uuid")
+#         try:
+#             own_uuid = str(request.user.staff_profile.uuid)
+#         except AttributeError:
+#             raise PermissionDenied
+
+#         if obj_uuid != own_uuid:
+#             raise PermissionDenied
+
+#         return super().dispatch(request, *args, **kwargs)
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
+
+from .models import Staff
+
+
 class OwnProfileOrStaffMixin(LoginRequiredMixin):
     """
-    Allow staff managers full access.
-    Allow regular staff to view/edit their own profile only.
+    HR/Admin:
+        Can access every employee profile.
+
+    Employee:
+        Can only access their own profile.
     """
 
     def dispatch(self, request, *args, **kwargs):
+
         if not request.user.is_authenticated:
             return self.handle_no_permission()
 
-        # Staff managers see everything
         if request.user.is_staff or request.user.is_superuser:
             return super().dispatch(request, *args, **kwargs)
 
-        # Regular user: only their own profile
-        obj_uuid = kwargs.get("uuid")
-        try:
-            own_uuid = str(request.user.staff_profile.uuid)
-        except AttributeError:
+        staff = Staff.objects.filter(
+            uuid=kwargs.get("uuid")
+        ).select_related("user").first()
+
+        if not staff:
             raise PermissionDenied
 
-        if obj_uuid != own_uuid:
-            raise PermissionDenied
+        if staff.user != request.user:
+            raise PermissionDenied(
+                "You may only view your own profile."
+            )
 
         return super().dispatch(request, *args, **kwargs)
-
 
 """
 idcards/mixins.py
