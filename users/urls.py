@@ -14,6 +14,7 @@ from .views import BulkPhotoUploadView, ajax_load_users
 
 urlpatterns = [
     path('', auth_views.LoginView.as_view(template_name='users/login.html'), name="login"),
+    path('locked-screen/', user_views.locked_home, name='locked-screen'),
     # path('register/', user_views.user_registration, name="user-registeration"),
     
     # # path('login/', user_views.user_login, name="user-login"),

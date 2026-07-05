@@ -172,12 +172,14 @@ def user_logout(request):
 
 
 def logout_success(request):
-    return render (request, 'users/logout.html')
+    # return render (request, 'users/logout.html')
+    return render (request, 'users/lockscreen.html')
 
 
-@login_required
-def users_home(request):
-    return render(request, 'pages/portal_home.html')
+
+# @login_required
+def locked_home(request):
+    return render(request, 'users/lockscreen.html')
 
 
 # all users

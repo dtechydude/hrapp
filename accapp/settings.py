@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'employees.apps.EmployeesConfig',
     'dashboard.apps.DashboardConfig',
     'organization.apps.OrganizationConfig',
+    'payroll.apps.PayrollConfig',
     'core',           # ← add this, before organization
 
     
@@ -168,7 +169,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = 'dashboard:app-home' # Redirect users to their dashboard after login
 LOGOUT_REDIRECT_URL = '/' # Redirect to home page after logout (or login page)
-LOGIN_URL = '/users/login/' # URL name of your login page
+LOGIN_URL = '/users/locked-screen/' # URL name of your login page
 
 
 

@@ -309,7 +309,7 @@
         <div class="kpi-icon c-blue"><i class="bi bi-calendar2-check"></i></div>
         <span class="kpi-trend flat">{{ staff_on_leave|default:"17" }} active</span>
       </div>
-      <div class="kpi-value">{{ staff_on_leave|default:"17" }}</div>
+      <div class="kpi-value">{{ staff_on_leave|default:"0" }}</div>
       <div class="kpi-label">Staff on Leave</div>
       <div class="kpi-sub">{{ leave_pending_today|default:"3" }} pending approval today</div>
     </div>
@@ -319,7 +319,7 @@
         <div class="kpi-icon c-red"><i class="bi bi-person-x-fill"></i></div>
         <span class="kpi-trend down"><i class="bi bi-arrow-down-short"></i>{{ suspended_staff_trend|default:"-3" }}</span>
       </div>
-      <div class="kpi-value">{{ suspended_staff|default:"8" }}</div>
+      <div class="kpi-value">{{ suspended_staff|default:"0" }}</div>
       <div class="kpi-label">Suspended Staff</div>
       <div class="kpi-sub">{{ reinstatement_pending|default:"2" }} pending reinstatement review</div>
     </div>

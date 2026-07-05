@@ -84,7 +84,7 @@ class SalaryComponent(models.Model):
     component_type = models.CharField(
         max_length=20,
         choices=ComponentType.choices,
-        default=ComponentType.EARNING,
+        default=ComponentType.OTHER,
     )
 
     calculation_method = models.CharField(
@@ -221,19 +221,18 @@ class SalaryComponent(models.Model):
 
         verbose_name_plural = "Salary Components"
 
-        indexes = [
-            indexes = [
+        indexes = [           
 
-                models.Index(fields=["code"]),
+            models.Index(fields=["code"]),
 
-                models.Index(fields=["component_type"]),
+            models.Index(fields=["component_type"]),
 
-                models.Index(fields=["display_order"]),
+            models.Index(fields=["display_order"]),
 
-                models.Index(fields=["is_active"]),
+            models.Index(fields=["is_active"]),
 
-            ]
         ]
+
 
         constraints = [
 

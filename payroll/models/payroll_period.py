@@ -219,3 +219,11 @@ class PayrollPeriod(models.Model):
                 "locked_at",
             ]
         )
+
+    # def lock(self):
+    #     self.locked = True
+    #     self.save(update_fields=["locked"])
+
+    def unlock(self):
+        self.locked = False
+        self.save(update_fields=["locked"])

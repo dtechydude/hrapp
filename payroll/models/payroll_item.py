@@ -86,6 +86,11 @@ class PayrollItem(models.Model):
         editable=False,
     )
 
+    component_type = models.CharField(
+        max_length=20,
+        editable=False,
+    )
+
     is_taxable = models.BooleanField(
         default=False,
     )

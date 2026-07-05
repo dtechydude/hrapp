@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.db import models
 
 from .payroll import Payroll
+from employees.models import Staff
 
 
 class PayrollJournal(models.Model):
@@ -19,6 +20,12 @@ class PayrollJournal(models.Model):
         editable=False,
         unique=True,
     )
+
+    staff = models.ForeignKey(
+    Staff,
+    on_delete=models.PROTECT,
+    related_name="payroll_journals",
+)
 
     payroll = models.ForeignKey(
         Payroll,

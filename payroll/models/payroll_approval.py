@@ -53,7 +53,7 @@ class PayrollApproval(models.Model):
         default=ApprovalStatus.PENDING,
     )
 
-        assigned_to = models.ForeignKey(
+    assigned_to = models.ForeignKey(
         User,
         null=True,
         blank=True,

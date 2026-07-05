@@ -154,24 +154,51 @@ class SalaryAssignment(models.Model):
                 "Effective To cannot be earlier than Effective From."
             )
 
+    # def save(self, *args, **kwargs):
+
+    #     """
+    #     Only one active salary assignment
+    #     per employee.
+    #     """
+
+    #     if self.is_current:
+
+    #         SalaryAssignment.objects.filter(
+    #             staff=self.staff,
+    #             is_current=True,
+    #         ).exclude(
+    #             pk=self.pk
+    #         ).update(
+    #             is_current=False,
+    #             effective_to=self.effective_from,
+    #         )
+
+    #     super().save(*args, **kwargs)
+
     def save(self, *args, **kwargs):
-
         """
-        Only one active salary assignment
-        per employee.
+        Snapshot Salary Component information.
+
+        This ensures Payroll Items remain historically
+        accurate even if the Salary Component changes
+        after payroll has been processed.
         """
 
-        if self.is_current:
+        self.full_clean()
 
-            SalaryAssignment.objects.filter(
-                staff=self.staff,
-                is_current=True,
-            ).exclude(
-                pk=self.pk
-            ).update(
-                is_current=False,
-                effective_to=self.effective_from,
-            )
+        # Snapshot component details only when creating
+        if self.component and not self.pk:
+            self.component_name = self.component.name
+            self.component_code = self.component.code
+            self.component_type = self.component.component_type
+            self.component_order = self.component.display_order
+
+            self.is_taxable = self.component.is_taxable
+            self.is_pensionable = self.component.is_pensionable
+            self.is_statutory = self.component.is_statutory
+
+        # Always calculate the amount from quantity × rate
+        self.amount = self.quantity * self.rate
 
         super().save(*args, **kwargs)
 
