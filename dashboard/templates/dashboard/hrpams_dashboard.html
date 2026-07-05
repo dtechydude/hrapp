@@ -6,6 +6,18 @@
    Extends base.html. All shell markup (sidebar, topbar, notif
    dropdown, footer, sidebar/notif JS) lives in base.html.
    This file supplies ONLY the page-specific blocks.
+
+   Data status:
+   - KPI cards (Active Staff, Client Organizations, Suspended,
+     On Leave, New Hires) and the growth chart are wired to real
+     data via DashboardView.get_context_data() — see dashboard/views.py.
+   - Payroll KPI card, the Payroll Breakdown donut, and the Payroll
+     Approval Queue table are still static placeholders — the
+     payroll module hasn't been built yet. They're marked below.
+   - A ~2,100-line stale duplicate of this whole page (wrapped in
+     {% templatetag openblock %} comment {% templatetag closeblock %})
+     previously sat below this file and has been removed — it never
+     rendered and was pure dead weight.
 ═══════════════════════════════════════════════════════════ #}
 
 {% block title %}Dashboard{% endblock %}
@@ -84,6 +96,117 @@
 
 {% block content %}
 
+<style>
+/* ── Export menu (page-header) ──
+   Named export-menu-* (not .dropdown/.dropdown-menu) deliberately:
+   this project loads Bootstrap 5, and .dropdown-menu is one of
+   Bootstrap's own classes with its own default `display:none` /
+   `.show` behavior — reusing that name collided with Bootstrap's
+   rules, which is why it rendered as a plain stacked list instead
+   of a floating menu. Positioning/visibility below is also mirrored
+   as inline style attributes on the elements themselves (see the
+   markup + JS), since inline styles win over any stylesheet rule
+   regardless of what else loads on the page. #}
+.export-menu-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 12px; border-radius: 6px; font-size: .84rem; color: var(--navy);
+  text-decoration: none;
+}
+.export-menu-item:hover { background: var(--surface-2, #F8FAFC); }
+.export-menu-item i { width: 16px; text-align: center; color: var(--text-muted); }
+
+
+/*For Drop Down on Export */
+/* Dropdown container */
+.export-dropdown{
+    display:none;
+    position:absolute;
+    top:calc(100% + 8px);
+    right:0;
+    width:290px;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 12px 30px rgba(0,0,0,.12);
+    z-index:9999;
+    padding:8px 0;
+    animation:dropdownFade .18s ease;
+}
+
+/* Individual item */
+.export-menu-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 18px;
+    text-decoration:none;
+    color:var(--text-dark);
+    transition:.2s ease;
+}
+
+.export-menu-item:hover{
+    background:#f8fafc;
+    color:var(--primary);
+    text-decoration:none;
+}
+
+/* Icon */
+.export-icon{
+    width:42px;
+    height:42px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#eef4ff;
+    color:var(--primary);
+    font-size:1.15rem;
+    flex-shrink:0;
+}
+
+/* Text */
+.export-text{
+    display:flex;
+    flex-direction:column;
+    line-height:1.2;
+}
+
+.export-text .title{
+    font-weight:600;
+    font-size:.95rem;
+    color:#1f2937;
+}
+
+.export-text small{
+    color:#6b7280;
+    font-size:.78rem;
+    margin-top:3px;
+}
+
+.export-menu-item:hover .title{
+    color:var(--primary);
+}
+
+/* Animation */
+@keyframes dropdownFade{
+    from{
+        opacity:0;
+        transform:translateY(-6px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.export-wrapper{
+    position:relative;
+    display:inline-block;
+}
+
+</style>
+
   <!-- ── Page header ── -->
   <div class="page-header">
     <div>
@@ -91,10 +214,59 @@
       <div class="page-subtitle">Here's what's happening with your workforce today — {% now "l, j F Y" %}</div>
     </div>
     <div class="page-header-actions">
-      <button class="btn btn-outline"><i class="bi bi-download"></i> Export</button>
+      <div style="position:relative;display:inline-block">
+        <button class="btn btn-outline" id="exportDropdownBtn" type="button">
+          <i class="bi bi-download"></i> Export <i class="bi bi-caret-down-fill" style="font-size:.55rem;margin-left:2px"></i>
+        </button>
+        {% comment %} <div id="exportDropdownMenu"
+             style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);min-width:230px;z-index:9999;padding:6px;">
+          <li><a href="{% url 'organization:organization-export' %}" class="export-menu-item">
+            <i class="bi bi-building"></i> Client Organizations (CSV)
+          </a></li>
+         <li> <a href="{% url 'employees:staff-export' %}" class="export-menu-item">
+            <i class="bi bi-people-fill"></i> Staff List (CSV)
+          </a></li>
+         <li> <a href="{% url 'organization:deployment-export' %}" class="export-menu-item">
+            <i class="bi bi-geo-alt-fill"></i> Deployment List (CSV)
+          </a></li>
+        </div> {% endcomment %}
+        <div id="exportDropdownMenu" class="export-dropdown">
+    <a href="{% url 'organization:organization-export' %}" class="export-menu-item">
+        <div class="export-icon">
+            <i class="bi bi-building"></i>
+        </div>
+        <div class="export-text">
+            <span class="title">Client Organizations</span>
+            <small>Export all organizations to CSV</small>
+        </div>
+    </a>
+
+    <a href="{% url 'employees:staff-export' %}" class="export-menu-item">
+        <div class="export-icon">
+            <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="export-text">
+            <span class="title">Staff Directory</span>
+            <small>Export employee records to CSV</small>
+        </div>
+    </a>
+
+    <a href="{% url 'organization:deployment-export' %}" class="export-menu-item">
+        <div class="export-icon">
+            <i class="bi bi-geo-alt-fill"></i>
+        </div>
+        <div class="export-text">
+            <span class="title">Deployments</span>
+            <small>Export deployment records to CSV</small>
+        </div>
+    </a>
+</div>
+
+      </div>
       <button class="btn btn-gold"><i class="bi bi-plus-lg"></i> <a href="{% url 'employees:add-employee' %}"> Add Staff </a></button>
     </div>
   </div>
+
 
   <!-- ── KPI Cards ──
        Replace the |default: fallback values with real context
@@ -111,6 +283,7 @@
       <div class="kpi-sub">Across {{ total_organizations|default:"43" }} client organizations</div>
     </div>
 
+    <!-- PAYROLL PLACEHOLDER — static until the payroll module ships -->
     <div class="kpi-card c-gold">
       <div class="kpi-top">
         <div class="kpi-icon c-gold"><i class="bi bi-cash-stack"></i></div>
@@ -186,44 +359,40 @@
   <!-- ── Payroll Chart + Activity ── -->
   <div class="grid-3 section-mb">
 
-    <!-- Payroll Bar Chart -->
+    <!-- Growth Chart -->
     <div class="card">
       <div class="card-header">
-        <div class="card-title"><i class="bi bi-bar-chart-fill"></i> Monthly Payroll vs Deductions</div>
+        <div class="card-title"><i class="bi bi-bar-chart-fill"></i> Staff &amp; Organization Growth (6 Months)</div>
         <button class="btn btn-outline btn-sm"><i class="bi bi-download"></i> Export</button>
       </div>
       <div class="chart-legend">
-        <span><span class="legend-dot" style="background:var(--navy)"></span>Gross Payroll</span>
-        <span><span class="legend-dot" style="background:var(--gold)"></span>Net Paid</span>
+        <span><span class="legend-dot" style="background:var(--navy)"></span>Active Staff</span>
+        <span><span class="legend-dot" style="background:var(--gold)"></span>Client Organizations</span>
       </div>
       <div class="chart-wrap">
         <div class="chart-inner">
-          <div class="chart-yaxis">
-            <span>100M</span>
-            <span>75M</span>
-            <span>50M</span>
-            <span>25M</span>
-            <span>0</span>
+          <div class="chart-yaxis" id="growthChartYAxis">
+            <span></span><span></span><span></span><span></span><span>0</span>
           </div>
           <div style="flex:1">
-            <div class="chart-bars" id="payrollChart">
-              <!-- Bars rendered by JS below from `payrollChartData` -->
+            <div class="chart-bars" id="growthChart">
+              <!-- Bars rendered by JS below from `growth_chart_data` -->
             </div>
           </div>
         </div>
       </div>
       <div class="mini-stat-row">
         <div class="mini-stat">
-          <div class="msv">{{ current_payroll_gross|default:"₦82.4M" }}</div>
-          <div class="msl">Gross ({{ current_month_short|default:"Nov" }})</div>
+          <div class="msv">{{ total_active_staff|default:"1,248" }}</div>
+          <div class="msl">Active Staff</div>
         </div>
         <div class="mini-stat">
-          <div class="msv">{{ current_payroll_deductions|default:"₦9.8M" }}</div>
-          <div class="msl">Total Deductions</div>
+          <div class="msv">{{ total_organizations|default:"43" }}</div>
+          <div class="msl">Client Organizations</div>
         </div>
         <div class="mini-stat">
-          <div class="msv">{{ current_payroll_net|default:"₦72.6M" }}</div>
-          <div class="msl">Net Payable</div>
+          <div class="msv">{{ new_hires_this_month|default:"23" }}</div>
+          <div class="msl">New This Month</div>
         </div>
       </div>
     </div>
@@ -445,6 +614,7 @@
       </div>
 
       <!-- Payroll Breakdown -->
+      <!-- PAYROLL PLACEHOLDER — static until the payroll module ships -->
       <div class="card">
         <div class="card-header">
           <div class="card-title"><i class="bi bi-pie-chart-fill"></i> Payroll Breakdown ({{ current_month_short|default:"Nov" }})</div>
@@ -581,7 +751,8 @@
 
   </div><!-- /grid-2 -->
 
-  <!-- ── Payroll Approval Queue ── -->
+  <!-- ── Payroll Approval Queue ──
+       PAYROLL PLACEHOLDER — static until the payroll module ships -->
   <div class="card section-mb">
     <div class="card-header">
       <div class="card-title"><i class="bi bi-check2-circle"></i> Payroll Approval Queue</div>
@@ -680,50 +851,86 @@
 
 {% block extra_js %}
 {# Chart data handed off to JS safely via json_script (avoids inline
-   JSON-in-<script> injection issues). DashboardView should pass
-   `payroll_chart_data` as a list of {month, gross, net} dicts;
-   this renders an empty/None script tag when the context key is
-   absent, and the JS below falls back to demo figures in that case. #}
-{{ payroll_chart_data|json_script:"payroll-chart-data" }}
+   JSON-in-<script> injection issues). DashboardView.get_context_data()
+   passes `growth_chart_data` as {labels: [...], staff: [...], organizations: [...]}
+   computed from real Staff/Company records — this renders an empty
+   script tag if the key is absent, and the JS below falls back to
+   demo figures in that case so the page never looks broken. #}
+{{ growth_chart_data|json_script:"growth-chart-data" }}
 <script>
 /* ══════════════════════════════════════════
-   PAYROLL BAR CHART (pure CSS bars via JS)
+   EXPORT DROPDOWN (page-header)
    Sidebar/topbar/notification JS already lives in base.html —
-   only the chart-rendering logic for this page belongs here.
+   only page-specific interactivity belongs here.
 ══════════════════════════════════════════ */
-const FALLBACK_PAYROLL_CHART_DATA = [
-  { month: 'Jun', gross: 74, net: 64 },
-  { month: 'Jul', gross: 76, net: 66 },
-  { month: 'Aug', gross: 75, net: 65 },
-  { month: 'Sep', gross: 79, net: 70 },
-  { month: 'Oct', gross: 81, net: 71 },
-  { month: 'Nov', gross: 82, net: 73 },
-];
+const exportBtn  = document.getElementById('exportDropdownBtn');
+const exportMenu = document.getElementById('exportDropdownMenu');
+if (exportBtn && exportMenu) {
+  exportBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    exportMenu.style.display = (exportMenu.style.display === 'block') ? 'none' : 'block';
+  });
+  document.addEventListener('click', () => { exportMenu.style.display = 'none'; });
+  exportMenu.addEventListener('click', e => e.stopPropagation());
+}
 
-const chartDataEl = document.getElementById('payroll-chart-data');
-let payrollChartData = FALLBACK_PAYROLL_CHART_DATA;
-if (chartDataEl) {
+/* ══════════════════════════════════════════
+   STAFF & ORGANIZATION GROWTH CHART
+   Real data once the view supplies growth_chart_data; falls back to
+   demo figures only if that context key is missing (e.g. template
+   preview without a view behind it).
+══════════════════════════════════════════ */
+const FALLBACK_GROWTH_CHART_DATA = {
+  labels: ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'],
+  staff: [1180, 1195, 1203, 1221, 1236, 1248],
+  organizations: [38, 39, 40, 41, 42, 43],
+};
+
+const growthDataEl = document.getElementById('growth-chart-data');
+let growthChartData = FALLBACK_GROWTH_CHART_DATA;
+if (growthDataEl) {
   try {
-    const parsed = JSON.parse(chartDataEl.textContent);
-    if (Array.isArray(parsed) && parsed.length) payrollChartData = parsed;
+    const parsed = JSON.parse(growthDataEl.textContent);
+    if (parsed && Array.isArray(parsed.labels) && parsed.labels.length) growthChartData = parsed;
   } catch (e) { /* keep fallback */ }
 }
 
-const PAYROLL_CHART_MAX = 100; // scale, in millions
+const growthChartEl = document.getElementById('growthChart');
+const growthYAxisEl = document.getElementById('growthChartYAxis');
 
-const payrollChartEl = document.getElementById('payrollChart');
-payrollChartData.forEach(d => {
-  const grossH = Math.round((d.gross / PAYROLL_CHART_MAX) * 160);
-  const netH   = Math.round((d.net   / PAYROLL_CHART_MAX) * 160);
-  payrollChartEl.insertAdjacentHTML('beforeend', `
-    <div class="bar-group">
-      <div class="bar-pair">
-        <div class="bar b-navy" style="height:${grossH}px" title="Gross ₦${d.gross}M"></div>
-        <div class="bar b-gold"  style="height:${netH}px"   title="Net ₦${d.net}M"></div>
-      </div>
-      <div class="bar-label">${d.month}</div>
-    </div>`);
-});
+if (growthChartEl) {
+  const { labels, staff, organizations } = growthChartData;
+
+  // Staff and organizations differ by orders of magnitude, so each
+  // series is scaled against its OWN max — the bars stay readable
+  // side-by-side instead of the organization count flattening to
+  // near-zero height against a staff-count scale.
+  const staffMax = Math.max(...staff, 1);
+  const orgMax   = Math.max(...organizations, 1);
+  const BAR_AREA_HEIGHT = 160; // px, matches .chart-wrap sizing
+
+  // Y-axis labels reflect the staff series (the larger, primary metric)
+  const niceMax = Math.ceil(staffMax / 100) * 100 || staffMax;
+  const yAxisSpans = growthYAxisEl ? growthYAxisEl.querySelectorAll('span') : [];
+  yAxisSpans.forEach((el, i) => {
+    if (i === yAxisSpans.length - 1) return; // last one stays "0"
+    const stepsFromTop = i;
+    const value = Math.round(niceMax - (niceMax / (yAxisSpans.length - 1)) * stepsFromTop);
+    el.textContent = value.toLocaleString();
+  });
+
+  labels.forEach((month, i) => {
+    const staffH = Math.round((staff[i] / staffMax) * BAR_AREA_HEIGHT);
+    const orgH   = Math.round((organizations[i] / orgMax) * BAR_AREA_HEIGHT);
+    growthChartEl.insertAdjacentHTML('beforeend', `
+      <div class="bar-group">
+        <div class="bar-pair">
+          <div class="bar b-navy" style="height:${staffH}px" title="${staff[i]} active staff"></div>
+          <div class="bar b-gold" style="height:${orgH}px" title="${organizations[i]} organizations"></div>
+        </div>
+        <div class="bar-label">${month}</div>
+      </div>`);
+  });
+}
 </script>
 {% endblock %}
-

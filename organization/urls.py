@@ -6,6 +6,16 @@ app_name = "organization"
 
 urlpatterns = [
     path(
+        "organizations/",
+        views.OrganizationListView.as_view(),
+        name="organization-list",
+    ),
+    path(
+        "organizations/print/",
+        views.OrganizationPrintView.as_view(),
+        name="organization-print",
+    ),
+    path(
         "deployments/",
         views.DeploymentListView.as_view(),
         name="deployment-list",

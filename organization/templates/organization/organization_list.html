@@ -1,0 +1,264 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Client Organizations{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'dashboard:app-home' %}" style="color:inherit">Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <span class="bc-current">Client Organizations</span>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <div>
+    <div class="page-title">
+      <i class="bi bi-building" style="color:var(--gold);font-size:1.1rem"></i>
+      Client Organizations
+    </div>
+    <div class="page-subtitle">
+      Every organization staff are deployed to, with contact details and current headcount.
+    </div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'organization:organization-print' %}" target="_blank" class="btn btn-outline">
+      <i class="bi bi-printer"></i> Print / Save PDF
+    </a>
+    <a href="{% url 'organization:organization-export' %}" class="btn btn-outline">
+      <i class="bi bi-filetype-csv"></i> Export CSV
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<style>
+/* ── Stat cards ── */
+.org-stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 991px) { .org-stat-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .org-stat-row { grid-template-columns: 1fr; } }
+.org-stat-card {
+  background: var(--surface, #fff); border: 1px solid var(--border);
+  border-radius: var(--radius-md, 10px); padding: 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.org-stat-icon {
+  width: 44px; height: 44px; border-radius: var(--radius-sm, 8px);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 1.1rem; flex-shrink: 0;
+}
+.org-stat-value { font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; color: var(--navy); line-height: 1.1; }
+.org-stat-label { font-size: .72rem; color: var(--text-muted); margin-top: 2px; }
+
+/* ── Filter row ── */
+.org-filter-row { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+.org-filter-field { flex: 1 1 200px; min-width: 160px; }
+.org-filter-field label { font-size: .76rem; font-weight: 600; margin-bottom: 4px; display: block; }
+@media (max-width: 767px) {
+  .org-filter-row { flex-direction: column; align-items: stretch; }
+  .org-filter-field { min-width: 0; }
+}
+
+/* ── Table ── */
+.org-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.org-table thead th {
+  text-align: left; font-size: .7rem; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--text-muted);
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.org-table tbody td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.org-table tbody tr:last-child td { border-bottom: none; }
+.org-table tbody tr:hover { background: var(--surface-2, #F8FAFC); }
+
+.org-cell { display: flex; align-items: center; gap: 10px; }
+.org-logo {
+  width: 36px; height: 36px; border-radius: 8px; object-fit: cover;
+  border: 1px solid var(--border); flex-shrink: 0;
+}
+.org-logo-fallback {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--gold-muted, #FDF6E3); border: 1.5px solid var(--gold-border, #E8C468);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: .8rem; font-weight: 800; color: var(--gold);
+  flex-shrink: 0;
+}
+.org-name { font-weight: 600; color: var(--navy); }
+.org-sub { font-size: .72rem; color: var(--text-muted); }
+
+.staff-count-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700;
+  background: var(--navy); color: #fff; text-decoration: none;
+}
+.staff-count-pill:hover { opacity: .85; }
+.staff-count-pill.zero { background: var(--border-2, #E2E8F0); color: var(--text-muted); }
+
+.contract-warning { color: #B45309; font-size: .72rem; font-weight: 600; }
+
+/* ── Responsive: collapse to cards below 767px ── */
+@media (max-width: 767px) {
+  .org-table thead { display: none; }
+  .org-table, .org-table tbody, .org-table tr, .org-table td { display: block; width: 100%; }
+  .org-table tr { border: 1px solid var(--border); border-radius: var(--radius-sm, 8px); margin: 12px; padding: 4px 0; }
+  .org-table td {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; padding: 8px 14px; border-bottom: 1px dashed var(--border); text-align: right;
+  }
+  .org-table td:last-child { border-bottom: none; }
+  .org-table td::before {
+    content: attr(data-label); font-size: .68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--text-muted); text-align: left;
+  }
+  .org-table td[data-label="Organization"] { text-align: left; }
+  .org-table td[data-label="Organization"]::before { display: none; }
+  .org-cell { width: 100%; }
+}
+</style>
+
+{# ── Summary cards ── #}
+<div class="org-stat-row section-mb">
+  <div class="org-stat-card">
+    <div class="org-stat-icon" style="background:var(--navy)"><i class="bi bi-building"></i></div>
+    <div>
+      <div class="org-stat-value">{{ stats.total_organizations }}</div>
+      <div class="org-stat-label">Total Organizations</div>
+    </div>
+  </div>
+  <div class="org-stat-card">
+    <div class="org-stat-icon" style="background:#22C55E"><i class="bi bi-check-circle-fill"></i></div>
+    <div>
+      <div class="org-stat-value">{{ stats.active_organizations }}</div>
+      <div class="org-stat-label">Active Contracts</div>
+    </div>
+  </div>
+  <div class="org-stat-card">
+    <div class="org-stat-icon" style="background:var(--gold)"><i class="bi bi-people-fill"></i></div>
+    <div>
+      <div class="org-stat-value">{{ stats.total_deployed_staff }}</div>
+      <div class="org-stat-label">Staff Deployed (All Clients)</div>
+    </div>
+  </div>
+  <div class="org-stat-card">
+    <div class="org-stat-icon" style="background:#EF4444"><i class="bi bi-exclamation-triangle-fill"></i></div>
+    <div>
+      <div class="org-stat-value">{{ stats.contracts_expiring_soon }}</div>
+      <div class="org-stat-label">Contracts Expiring (30d)</div>
+    </div>
+  </div>
+</div>
+
+{# ── Filters ── #}
+<div class="card section-mb">
+  <div style="padding:16px 20px">
+    <form method="get" class="org-filter-row">
+      <div class="org-filter-field">
+        <label>Search</label>
+        <input type="text" name="q" value="{{ search_term }}" class="form-control"
+               placeholder="Name, code, contact person, industry…">
+      </div>
+      <div class="org-filter-field">
+        <label>Status</label>
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="submit" class="btn btn-outline"><i class="bi bi-funnel"></i> Filter</button>
+        <a href="{% url 'organization:organization-list' %}" class="btn btn-outline">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── Organization table ── #}
+<div class="card">
+  <div class="table-responsive">
+    <table class="org-table">
+      <thead>
+        <tr>
+          <th>Organization</th>
+          <th>Contact Info</th>
+          <th>Industry</th>
+          <th>Deployed Staff</th>
+          <th>Contract End</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for org in organizations %}
+        <tr>
+          <td data-label="Organization">
+            <div class="org-cell">
+              {% if org.logo %}
+                <img src="{{ org.logo.url }}" alt="{{ org.name }}" class="org-logo">
+              {% else %}
+                <div class="org-logo-fallback">{{ org.name|slice:":2"|upper }}</div>
+              {% endif %}
+              <div>
+                <div class="org-name">{{ org.name }}</div>
+                <div class="org-sub">{{ org.code }}</div>
+              </div>
+            </div>
+          </td>
+          <td data-label="Contact Info">
+            <div>{{ org.contact_person|default:"—" }}</div>
+            <div class="org-sub">{{ org.phone|default:"" }}{% if org.phone and org.email %} · {% endif %}{{ org.email|default:"" }}</div>
+          </td>
+          <td data-label="Industry">{{ org.industry|default:"—" }}</td>
+          <td data-label="Deployed Staff">
+            <a href="{% url 'organization:deployment-list' %}?company={{ org.id }}"
+               class="staff-count-pill {% if org.deployed_staff_count == 0 %}zero{% endif %}"
+               title="View staff deployed at {{ org.name }}">
+              <i class="bi bi-people-fill"></i> {{ org.deployed_staff_count }}
+            </a>
+          </td>
+          <td data-label="Contract End">
+            {{ org.contract_end_date|date:"d M Y"|default:"—" }}
+            {% if org.is_contract_expiring_soon %}
+              <div class="contract-warning"><i class="bi bi-exclamation-triangle-fill"></i> Expiring soon</div>
+            {% endif %}
+          </td>
+          <td data-label="Status">
+            <span class="pill {% if org.status == 'Active' %}active{% else %}inactive{% endif %}">{{ org.status }}</span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">
+            No organizations match your filters.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--border);flex-wrap:wrap;gap:10px">
+    <span style="font-size:.8rem;color:var(--text-muted)">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      ({{ paginator.count }} organization{{ paginator.count|pluralize }})
+    </span>
+    <div style="display:flex;gap:8px">
+      {% if page_obj.has_previous %}
+      <a class="btn btn-outline btn-sm"
+         href="?page={{ page_obj.previous_page_number }}&q={{ search_term }}&status={{ selected_status }}">
+        <i class="bi bi-chevron-left"></i> Previous
+      </a>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <a class="btn btn-outline btn-sm"
+         href="?page={{ page_obj.next_page_number }}&q={{ search_term }}&status={{ selected_status }}">
+        Next <i class="bi bi-chevron-right"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

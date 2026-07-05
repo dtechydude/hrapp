@@ -36,6 +36,9 @@ from .views import (
     IDCardRevokeView,
 )
 
+from .exports import StaffExportView
+
+
 
 app_name = "employees"
 
@@ -81,6 +84,9 @@ urlpatterns = [
         StaffStatusToggleView.as_view(),
         name="toggle_status",
     ),
+
+    path("export/", StaffExportView.as_view(), name="staff-export"),
+
 
     # ID Card
     path("<uuid:staff_uuid>/id-card/", IDCardDetailView.as_view(), name="view"),

@@ -75,9 +75,11 @@
       <div class="sb-sub {% block nav_staff_sub %}{% endblock %}" id="sub-staff">
         <a href="{% url 'employees:employee-list' %}" class="sb-sub-item {% block nav_staff_list %}{% endblock %}">All Staff</a>
         <a href="{% url 'employees:add-employee' %}" class="sb-sub-item {% block nav_staff_add %}{% endblock %}">Add New Staff</a>
-        <a href="#" class="sb-sub-item {% block nav_staff_history %}{% endblock %}">Employment History</a>
+        <a href="{% url 'organization:deployment-list' %}" class="sb-sub-item {% block nav_staff_history %}{% endblock %}">Deployment History</a>
+        <a href="{% url 'organization:deployment-create' %}" class="sb-sub-item" > Create Deployment</a>
         <a href="#" class="sb-sub-item {% block nav_staff_promotions %}{% endblock %}">Promotions</a>
         <a href="#" class="sb-sub-item {% block nav_staff_suspensions %}{% endblock %}">Suspensions</a>
+
       </div>
 
       <button class="sb-item {% block nav_org_open %}{% endblock %}" onclick="toggleSub(this,'sub-org')">
@@ -86,8 +88,9 @@
         <i class="bi bi-chevron-right sb-arrow"></i>
       </button>
       <div class="sb-sub {% block nav_org_sub %}{% endblock %}" id="sub-org">
-        <a href="#" class="sb-sub-item {% block nav_org_list %}{% endblock %}">All Organizations</a>
-        <a href="#" class="sb-sub-item {% block nav_org_add %}{% endblock %}">Add Organization</a>
+        <a href="{% url 'organization:organization-list' %}" class="sb-sub-item {% block nav_org_list %}{% endblock %}">All Organizations</a>
+        <a href="{% url 'organization:organization-print' %}" class="sb-sub-item">Print Organizations</a>
+        <a href="/admin/organization/company/add/" class="sb-sub-item {% block nav_org_add %}{% endblock %}">Add Organization</a>
         <a href="#" class="sb-sub-item {% block nav_org_contracts %}{% endblock %}">Contracts</a>
       </div>
 
