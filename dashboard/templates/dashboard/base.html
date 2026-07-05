@@ -73,8 +73,8 @@
         <i class="bi bi-chevron-right sb-arrow"></i>
       </button>
       <div class="sb-sub {% block nav_staff_sub %}{% endblock %}" id="sub-staff">
-        <a href="#" class="sb-sub-item {% block nav_staff_list %}{% endblock %}">All Staff</a>
-        <a href="#" class="sb-sub-item {% block nav_staff_add %}{% endblock %}">Add New Staff</a>
+        <a href="{% url 'employees:employee-list' %}" class="sb-sub-item {% block nav_staff_list %}{% endblock %}">All Staff</a>
+        <a href="{% url 'employees:add-employee' %}" class="sb-sub-item {% block nav_staff_add %}{% endblock %}">Add New Staff</a>
         <a href="#" class="sb-sub-item {% block nav_staff_history %}{% endblock %}">Employment History</a>
         <a href="#" class="sb-sub-item {% block nav_staff_promotions %}{% endblock %}">Promotions</a>
         <a href="#" class="sb-sub-item {% block nav_staff_suspensions %}{% endblock %}">Suspensions</a>
@@ -319,8 +319,8 @@
 
       <!-- Footer -->
       <div style="text-align:center;padding:16px 0 8px;font-size:.72rem;color:var(--text-muted);border-top:1px solid var(--border)">
-        HRPAMS Enterprise Suite v2.0 &nbsp;·&nbsp; Django 5 + PostgreSQL &nbsp;·&nbsp;
-        &copy; {% now "Y" %} KwikSchools. All rights reserved. &nbsp;·&nbsp;
+        Developed By <a href="https://fizcos.com"><strong>Fizcos Infotech Solutions</strong></a> &nbsp;·&nbsp; {{ corporate_info.name }} &nbsp;·&nbsp;
+        &copy; {% now "Y" %}  All rights reserved. &nbsp;·&nbsp;
         <span style="color:var(--navy);font-weight:600">Audit Compliant</span>
       </div>
 

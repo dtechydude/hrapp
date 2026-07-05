@@ -1,0 +1,102 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Deploy Staff{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'organization:deployment-list' %}" style="color:inherit">Staff Deployment</a>
+  <i class="bi bi-chevron-right"></i>
+  <span class="bc-current">Deploy Staff</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+@media (max-width: 767px) {
+  .form-grid-2 { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <div>
+    <div class="page-title">
+      <i class="bi bi-signpost-split" style="color:var(--gold);font-size:1.1rem"></i>
+      Deploy / Redeploy Staff
+    </div>
+    <div class="page-subtitle">
+      Posting a staff member who already has a current deployment closes
+      that posting automatically — the record is kept, not deleted.
+    </div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'organization:deployment-list' %}" class="btn btn-outline">
+      <i class="bi bi-arrow-left"></i> Cancel
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="padding:28px">
+
+    {% if form.non_field_errors %}
+    <div class="error-summary section-mb" style="background:var(--red-bg);border:1px solid rgba(239,68,68,.25);border-left:3px solid var(--red);border-radius:var(--radius-sm);padding:14px 16px">
+      {% for error in form.non_field_errors %}
+        <div style="font-size:.82rem;color:var(--red)"><i class="bi bi-exclamation-circle"></i> {{ error }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Staff Member <span style="color:var(--red)">*</span></label>
+          {{ form.staff }}
+          {% if form.staff.errors %}<div class="form-error">{{ form.staff.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Client Organization <span style="color:var(--red)">*</span></label>
+          {{ form.company }}
+          {% if form.company.errors %}<div class="form-error">{{ form.company.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Department <span style="color:var(--red)">*</span></label>
+          {{ form.department }}
+          {% if form.department.errors %}<div class="form-error">{{ form.department.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Designation <span style="color:var(--red)">*</span></label>
+          {{ form.designation }}
+          {% if form.designation.errors %}<div class="form-error">{{ form.designation.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Start Date <span style="color:var(--red)">*</span></label>
+          {{ form.start_date }}
+          <div class="form-hint">{{ form.start_date.help_text }}</div>
+          {% if form.start_date.errors %}<div class="form-error">{{ form.start_date.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-actions" style="margin-top:24px">
+        <div style="font-size:.78rem;color:var(--text-muted)">
+          <i class="bi bi-asterisk" style="color:var(--red);font-size:.6rem;vertical-align:super"></i>
+          Required fields must be completed before saving.
+        </div>
+        <div class="form-actions-right" style="display:flex;gap:10px">
+          <a href="{% url 'organization:deployment-list' %}" class="btn btn-outline">
+            <i class="bi bi-x-lg"></i> Cancel
+          </a>
+          <button type="submit" class="btn btn-gold">
+            <i class="bi bi-check2-circle"></i> Save Deployment
+          </button>
+        </div>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

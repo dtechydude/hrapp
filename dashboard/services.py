@@ -119,3 +119,70 @@ def build_employee_dashboard_context(staff) -> dict:
         employment_history=get_employment_history(staff),
     )
     return ctx.as_dict()
+
+
+"""
+dashboard/services.py
+
+Business logic that powers dashboard widgets, kept out of views.py
+so it's independently testable and reusable (e.g. a future "Growth
+Report" page can call get_growth_trend() directly).
+"""
+from calendar import monthrange
+from datetime import date
+
+from django.utils import timezone
+
+from employees.models import EmploymentStatus, Staff
+from organization.models import Company
+
+
+def _month_end(base: date, months_back: int) -> date:
+    """Last calendar day of the month `months_back` months before base."""
+    month = base.month - months_back
+    year = base.year
+    while month <= 0:
+        month += 12
+        year -= 1
+    return date(year, month, monthrange(year, month)[1])
+
+
+def get_growth_trend(months: int = 6) -> list[dict]:
+    """
+    Point-in-time snapshot of active-staff and client-organization
+    counts at the end of each of the last `months` calendar months
+    (oldest first). Drives the dashboard growth chart.
+
+    Honesty note: staff counts use each staff member's CURRENT
+    employment_status, since there's no historical status log yet
+    (that's what the Employment History module will provide). So
+    this reads as "staff hired on/before that month who are still
+    Active today" rather than a true historical snapshot — accurate
+    enough for a trend line, but swap this out once Employment
+    History tracking exists.
+    """
+    today = timezone.localdate()
+    trend = []
+
+    for i in range(months - 1, -1, -1):
+        cutoff = today if i == 0 else _month_end(today, i)
+
+        staff_count = Staff.objects.filter(
+            date_employed__lte=cutoff,
+            employment_status=EmploymentStatus.ACTIVE,
+        ).count()
+
+        org_count = Company.objects.filter(
+            created_at__date__lte=cutoff,
+            is_active=True,
+        ).count()
+
+        trend.append(
+            {
+                "month": cutoff.strftime("%b"),
+                "staff": staff_count,
+                "organizations": org_count,
+            }
+        )
+
+    return trend

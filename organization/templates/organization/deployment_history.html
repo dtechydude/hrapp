@@ -1,0 +1,78 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Posting History — {{ staff.full_name }}{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'organization:deployment-list' %}" style="color:inherit">Staff Deployment</a>
+  <i class="bi bi-chevron-right"></i>
+  <span class="bc-current">{{ staff.full_name }}</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.history-item {
+  display: flex; gap: 16px; padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.history-item:last-child { border-bottom: none; }
+.history-marker {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--border-2); margin-top: 6px; flex-shrink: 0;
+}
+.history-item.is-current .history-marker { background: var(--green, #22C55E); }
+.history-title { font-weight: 700; color: var(--navy); font-size: .88rem; }
+.history-meta { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
+@media (max-width: 480px) {
+  .history-item { flex-direction: column; gap: 6px; }
+}
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <div>
+    <div class="page-title">
+      <i class="bi bi-clock-history" style="color:var(--gold);font-size:1.1rem"></i>
+      Posting History — {{ staff.full_name }}
+    </div>
+    <div class="page-subtitle">
+      Employee No: <strong>{{ staff.employee_no }}</strong>
+      &nbsp;·&nbsp; Every posting below is permanent and never edited or removed.
+    </div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'organization:deployment-list' %}" class="btn btn-outline">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div style="padding:24px 28px">
+    {% for d in deployments %}
+    <div class="history-item {% if d.is_current %}is-current{% endif %}">
+      <div class="history-marker"></div>
+      <div>
+        <div class="history-title">
+          {{ d.company.name }} — {{ d.department.name }} ({{ d.designation.name }})
+          {% if d.is_current %}
+            <span class="pill active" style="margin-left:8px">Current</span>
+          {% endif %}
+        </div>
+        <div class="history-meta">
+          {{ d.start_date|date:"d M Y" }}
+          {% if d.end_date %} &nbsp;→&nbsp; {{ d.end_date|date:"d M Y" }}{% else %} &nbsp;→&nbsp; Present{% endif %}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <p style="color:var(--text-muted);text-align:center;padding:24px 0">
+      No deployment history recorded for this staff member yet.
+    </p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

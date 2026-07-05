@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'employees.apps.EmployeesConfig',
     'dashboard.apps.DashboardConfig',
     'organization.apps.OrganizationConfig',
+    'core',           # ← add this, before organization
+
     
 
     
@@ -89,7 +91,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                
+
                 'dashboard.context_processors.corporate_identity',
             ],
         },

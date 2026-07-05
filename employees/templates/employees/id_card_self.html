@@ -110,8 +110,8 @@
           <div class="badge-role">{{ staff.staff_rank|default:staff.employment_type }}</div>
           <div class="badge-meta">
             <div><b>ID:</b> {{ staff.employee_no }}</div>
-            <div><b>Dept:</b> {{ deployment.department|default:"—" }}</div>
-            <div><b>Blood Grp:</b> —</div>
+            <div><b>Gender:</b> {{ staff.gender }} </div>
+            <div><b>Dept:</b> {{ staff.current_deployment.company }} | {{ staff.current_deployment.department|default:"—" }}</div>
           </div>
         </div>
       </div>
