@@ -233,8 +233,14 @@
         {% if unread_notification_count %}<span class="sb-badge">{{ unread_notification_count }}</span>{% endif %}
       </a>
 
-      <div class="sb-group">Account</div>
+      <div class="sb-group">Account / Messages</div>
 
+       <a href="{% url 'password_reset' %}" class="sb-item {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}">
+ 
+      <i class="bi bi-envelope-fill sb-icon"></i>
+        <span class="sb-label" style="color:yellow;">Request/Complaint Form</span>
+      </a>
+      
       {% comment %} <a href="{% url 'accounts:change_password' %}" class="sb-item {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}"> {% endcomment %}
       <a href="{% url 'password_reset' %}" class="sb-item {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}">
  
