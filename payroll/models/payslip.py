@@ -192,8 +192,8 @@ class Payslip(models.Model):
         return self.payroll.gross_salary
 
     @property
-    def total_allowances(self):
-        return self.payroll.total_allowances
+    def total_earnings(self):
+        return self.payroll.total_earnings
 
     @property
     def total_deductions(self):

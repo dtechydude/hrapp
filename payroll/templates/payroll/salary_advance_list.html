@@ -1,0 +1,45 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Salary Advances{% endblock %}
+{% block breadcrumb %}
+  <a href="{% url 'payroll:period-list' %}" style="color:inherit">Payroll</a>
+  <i class="bi bi-chevron-right"></i><span class="bc-current">Salary Advances</span>
+{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-wallet2" style="color:var(--gold)"></i> Salary Advances</div>
+    <div class="page-subtitle">Short-term advances repaid via automatic payroll deductions.</div>
+  </div>
+  <div class="page-header-actions"><a href="{% url 'payroll:advance-create' %}" class="btn btn-gold"><i class="bi bi-plus-lg"></i> New Request</a></div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <table style="width:100%;border-collapse:collapse;font-size:.86rem">
+    <thead><tr style="text-align:left;font-size:.7rem;text-transform:uppercase;color:var(--text-muted)">
+      <th style="padding:12px 16px;border-bottom:1px solid var(--border)">Staff</th>
+      <th style="padding:12px 16px;border-bottom:1px solid var(--border)">Requested</th>
+      <th style="padding:12px 16px;border-bottom:1px solid var(--border)">Approved</th>
+      <th style="padding:12px 16px;border-bottom:1px solid var(--border)">Balance</th>
+      <th style="padding:12px 16px;border-bottom:1px solid var(--border)">Status</th>
+      <th style="padding:12px 16px;border-bottom:1px solid var(--border)"></th>
+    </tr></thead>
+    <tbody>
+      {% for a in advances %}
+      <tr>
+        <td style="padding:10px 16px;border-bottom:1px solid var(--border)">{{ a.staff.full_name }}</td>
+        <td style="padding:10px 16px;border-bottom:1px solid var(--border)">₦{{ a.amount_requested|floatformat:2 }}</td>
+        <td style="padding:10px 16px;border-bottom:1px solid var(--border)">₦{{ a.amount_approved|floatformat:2 }}</td>
+        <td style="padding:10px 16px;border-bottom:1px solid var(--border)">₦{{ a.balance|floatformat:2 }}</td>
+        <td style="padding:10px 16px;border-bottom:1px solid var(--border)">{{ a.status }}</td>
+        <td style="padding:10px 16px;border-bottom:1px solid var(--border);text-align:right">
+          {% if a.status == 'Pending' %}<a href="{% url 'payroll:advance-approve' a.pk %}" class="btn btn-outline btn-sm">Approve</a>{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">No salary advances yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

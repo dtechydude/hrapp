@@ -182,3 +182,45 @@ class ManagerRequiredMixin(LoginRequiredMixin):
 
         return super().dispatch(request, *args, **kwargs)
 
+
+
+"""
+employees/mixins.py
+
+Shared mixins for employee self-service views across every app
+(payroll, and eventually leave, loans, documents, ...). Lives in
+`employees` rather than `core` since it needs to import Staff
+directly, and employees already owns that model — keeping the import
+one-directional avoids any risk of a circular import with core.
+"""
+from django.core.exceptions import PermissionDenied
+
+from .models import Staff
+
+
+class StaffRequiredMixin:
+    """
+    Ensures the logged-in user has a linked Staff profile before the
+    view runs, and makes it available as `self.staff`.
+
+    Mirrors the exact check and message already used in
+    DashboardHomeView._render_employee_dashboard, so a user without a
+    linked profile sees the same explanation everywhere in the app
+    instead of a generic 404 on some pages and a friendly message on
+    others.
+
+    Usage:
+        class MyPayslipListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
+            def get_queryset(self):
+                return Payroll.objects.filter(staff=self.staff)
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            self.staff = request.user.staff_profile
+        except Staff.DoesNotExist:
+            raise PermissionDenied(
+                "Your account is not linked to a staff profile. "
+                "Please contact HR to have your access configured."
+            )
+        return super().dispatch(request, *args, **kwargs)

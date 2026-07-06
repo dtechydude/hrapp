@@ -1,0 +1,53 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Salary Structure{% endblock %}
+{% block breadcrumb %}
+  <a href="{% url 'payroll:structure-list' %}" style="color:inherit">Salary Structures</a>
+  <i class="bi bi-chevron-right"></i><span class="bc-current">{{ object.name|default:"New" }}</span>
+{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <div><div class="page-title"><i class="bi bi-diagram-3" style="color:var(--gold)"></i> {{ object.name|default:"New Salary Structure" }}</div></div>
+</div>
+{% endblock %}
+{% block content %}
+<style>
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+@media (max-width: 767px) { .form-grid-2 { grid-template-columns: 1fr; } }
+.item-row { display: grid; grid-template-columns: 2fr 1fr 1fr 2fr 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--border); }
+@media (max-width: 991px) { .item-row { grid-template-columns: 1fr; } }
+</style>
+<div class="card section-mb">
+  <div style="padding:28px">
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-grid-2">
+        <div class="form-group"><label class="form-label">Organization *</label>{{ form.company }}</div>
+        <div class="form-group"><label class="form-label">Name *</label>{{ form.name }}</div>
+        <div class="form-group"><label class="form-label">Code *</label>{{ form.code }}</div>
+        <div class="form-group"><label class="form-label">Effective From *</label>{{ form.effective_from }}</div>
+        <div class="form-group" style="grid-column:span 2"><label class="form-label">Description</label>{{ form.description }}</div>
+      </div>
+
+      {% if formset %}
+      <h3 style="margin-top:28px;font-size:.95rem;color:var(--navy)">Salary Components</h3>
+      {{ formset.management_form }}
+      {% for f in formset %}
+        <div class="item-row">
+          {{ f.id }}
+          {{ f.component }}
+          {{ f.amount }}
+          {{ f.percentage }}
+          {{ f.formula_override }}
+          {% if f.instance.pk %}<label style="font-size:.78rem"><input type="checkbox" name="{{ f.prefix }}-DELETE"> Remove</label>{% endif %}
+        </div>
+      {% endfor %}
+      {% endif %}
+
+      <div style="margin-top:24px;display:flex;justify-content:flex-end;gap:10px">
+        <a href="{% url 'payroll:structure-list' %}" class="btn btn-outline">Back</a>
+        <button type="submit" class="btn btn-gold"><i class="bi bi-check2-circle"></i> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

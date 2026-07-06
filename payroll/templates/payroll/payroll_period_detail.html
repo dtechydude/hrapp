@@ -1,0 +1,121 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}{{ period.period_name }} — {{ period.company.name }}{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'payroll:period-list' %}" style="color:inherit">Payroll</a>
+  <i class="bi bi-chevron-right"></i>
+  <span class="bc-current">{{ period.period_name }}</span>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-cash-stack" style="color:var(--gold);font-size:1.1rem"></i> {{ period.company.name }} — {{ period.period_name }}</div>
+    <div class="page-subtitle">Status: <strong>{{ period.status }}</strong> · Payroll date: {{ period.payroll_date|date:"d M Y" }}</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'payroll:period-export' period.pk %}" class="btn btn-outline"><i class="bi bi-filetype-csv"></i> Export Register</a>
+    {% if not period.is_locked and period.status != 'Paid' %}
+    <form method="post" action="{% url 'payroll:period-run' period.pk %}" style="display:inline" onsubmit="return confirm('Run payroll for every staff deployed to {{ period.company.name }}? This will recalculate all payrolls for this period.')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-gold"><i class="bi bi-play-fill"></i> Run Payroll</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+.pp-stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 767px) { .pp-stat-row { grid-template-columns: 1fr; } }
+.pp-stat-card { background: var(--surface,#fff); border: 1px solid var(--border); border-radius: var(--radius-md,10px); padding: 18px; }
+.pp-stat-value { font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; color: var(--navy); }
+.pp-stat-label { font-size: .74rem; color: var(--text-muted); margin-top: 4px; }
+
+.pp-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.pp-table thead th {
+  text-align: left; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--text-muted); padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.pp-table tbody td { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.pp-table tbody tr:hover { background: var(--surface-2,#F8FAFC); }
+.pp-actions-bar { display: flex; gap: 10px; flex-wrap: wrap; padding: 16px 20px; border-top: 1px solid var(--border); }
+
+@media (max-width: 767px) {
+  .pp-table thead { display: none; }
+  .pp-table, .pp-table tbody, .pp-table tr, .pp-table td { display: block; width: 100%; }
+  .pp-table tr { border: 1px solid var(--border); border-radius: 8px; margin: 12px; }
+  .pp-table td { display: flex; justify-content: space-between; padding: 8px 14px; border-bottom: 1px dashed var(--border); text-align: right; }
+  .pp-table td::before { content: attr(data-label); font-weight: 700; font-size: .68rem; text-transform: uppercase; color: var(--text-muted); text-align: left; }
+}
+</style>
+
+<div class="pp-stat-row section-mb">
+  <div class="pp-stat-card"><div class="pp-stat-value">₦{{ total_gross|floatformat:2 }}</div><div class="pp-stat-label">Total Gross</div></div>
+  <div class="pp-stat-card"><div class="pp-stat-value">₦{{ total_deductions|floatformat:2 }}</div><div class="pp-stat-label">Total Deductions</div></div>
+  <div class="pp-stat-card"><div class="pp-stat-value">₦{{ total_net|floatformat:2 }}</div><div class="pp-stat-label">Total Net Payable</div></div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="pp-table">
+      <thead>
+        <tr><th>Staff</th><th>Gross</th><th>Deductions</th><th>Net</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for payroll in payrolls %}
+        <tr>
+          <td data-label="Staff">{{ payroll.staff.full_name }} <span style="color:var(--text-muted);font-size:.76rem">({{ payroll.staff.employee_no }})</span></td>
+          <td data-label="Gross">₦{{ payroll.gross_salary|floatformat:2 }}</td>
+          <td data-label="Deductions">₦{{ payroll.total_deductions|floatformat:2 }}</td>
+          <td data-label="Net" style="font-weight:700;color:var(--navy)">₦{{ payroll.net_salary|floatformat:2 }}</td>
+          <td data-label="Status">{{ payroll.payment_status }}</td>
+          <td data-label="" style="text-align:right">
+            <a href="{% url 'payroll:payslip-print' payroll.pk %}" target="_blank" class="btn btn-outline btn-sm"><i class="bi bi-file-earmark-text"></i> Payslip</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">
+          No payroll generated yet for this period — click "Run Payroll" above.
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pp-actions-bar">
+    {% if period.status == 'Processing' %}
+    <form method="post" action="{% url 'payroll:period-approve' period.pk %}" onsubmit="return confirm('Approve this payroll period? It should be reviewed first.')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline"><i class="bi bi-check2-square"></i> Approve Period</button>
+    </form>
+    {% endif %}
+    {% if period.status == 'Approved' %}
+    <form method="post" action="{% url 'payroll:bank-schedule-generate' period.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline"><i class="bi bi-bank"></i> Generate Bank Schedule</button>
+    </form>
+    <form method="post" action="{% url 'payroll:period-lock' period.pk %}" onsubmit="return confirm('Lock this period? Once locked it can never be modified again.')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline" style="color:var(--red);border-color:var(--red)"><i class="bi bi-lock-fill"></i> Lock Period</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if runs %}
+<div class="card section-mb" style="margin-top:20px">
+  <div class="card-header"><div class="card-title"><i class="bi bi-clock-history"></i> Recent Runs</div></div>
+  <div style="padding:16px 20px;font-size:.84rem;color:var(--text-muted)">
+    {% for run in runs %}
+      <div style="padding:6px 0;border-bottom:1px dashed var(--border)">
+        Run #{{ run.run_number }} — {{ run.successful }} succeeded, {{ run.failed }} failed of {{ run.total_staff }} ({{ run.started_at|date:"d M Y H:i" }})
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

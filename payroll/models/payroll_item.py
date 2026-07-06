@@ -6,6 +6,7 @@ from django.db import models
 
 from .payroll import Payroll
 from .salary_component import SalaryComponent
+from .choices import ComponentNature
 
 
 class PayrollItem(models.Model):
@@ -86,9 +87,11 @@ class PayrollItem(models.Model):
         editable=False,
     )
 
-    component_type = models.CharField(
+    nature = models.CharField(
         max_length=20,
+        choices=ComponentNature.choices,
         editable=False,
+        help_text="Snapshotted at creation — Earning or Deduction.",
     )
 
     is_taxable = models.BooleanField(
@@ -191,6 +194,7 @@ class PayrollItem(models.Model):
             self.component_name = self.component.name
             self.component_code = self.component.code
             self.component_order = self.component.display_order
+            self.nature = self.component.nature
 
             self.is_taxable = self.component.is_taxable
             self.is_pensionable = self.component.is_pensionable
@@ -214,19 +218,15 @@ class PayrollItem(models.Model):
     @property
     def is_earning(self):
         """
-        Returns True if this item is an earning.
+        Returns True if this item is an earning. Uses the snapshotted
+        `nature`, not the live component, so a component reclassified
+        after the fact never rewrites already-issued payroll history.
         """
-        return (
-            self.component.component_type
-            == SalaryComponent.ComponentType.EARNING
-        )
+        return self.nature == ComponentNature.EARNING
 
     @property
     def is_deduction(self):
         """
-        Returns True if this item is a deduction.
+        Returns True if this item is a deduction (see is_earning note).
         """
-        return (
-            self.component.component_type
-            == SalaryComponent.ComponentType.DEDUCTION
-        )
+        return self.nature == ComponentNature.DEDUCTION

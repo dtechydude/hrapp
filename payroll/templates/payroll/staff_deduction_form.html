@@ -1,0 +1,30 @@
+{% extends "dashboard/base.html" %}
+{% block title %}New Deduction{% endblock %}
+{% block breadcrumb %}
+  <a href="{% url 'payroll:deduction-list' %}" style="color:inherit">Deductions</a>
+  <i class="bi bi-chevron-right"></i><span class="bc-current">New</span>
+{% endblock %}
+{% block page_header %}
+<div class="page-header"><div><div class="page-title"><i class="bi bi-dash-circle" style="color:var(--gold)"></i> New Staff Deduction</div></div></div>
+{% endblock %}
+{% block content %}
+<style>.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}@media(max-width:767px){.form-grid-2{grid-template-columns:1fr}}</style>
+<div class="card"><div style="padding:28px">
+<form method="post">
+  {% csrf_token %}
+  <div class="form-grid-2">
+    <div class="form-group"><label class="form-label">Staff *</label>{{ form.staff }}</div>
+    <div class="form-group"><label class="form-label">Component *</label>{{ form.component }}</div>
+    <div class="form-group"><label class="form-label">Frequency *</label>{{ form.frequency }}</div>
+    <div class="form-group"><label class="form-label">Amount *</label>{{ form.amount }}</div>
+    <div class="form-group"><label class="form-label">Start Date *</label>{{ form.start_date }}</div>
+    <div class="form-group"><label class="form-label">End Date</label>{{ form.end_date }}</div>
+    <div class="form-group" style="grid-column:span 2"><label class="form-label">Reason</label>{{ form.reason }}</div>
+  </div>
+  <div style="margin-top:24px;display:flex;justify-content:flex-end;gap:10px">
+    <a href="{% url 'payroll:deduction-list' %}" class="btn btn-outline">Cancel</a>
+    <button type="submit" class="btn btn-gold">Save</button>
+  </div>
+</form>
+</div></div>
+{% endblock %}

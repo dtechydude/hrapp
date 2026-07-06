@@ -1,0 +1,63 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}New Payroll Period{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'payroll:period-list' %}" style="color:inherit">Payroll</a>
+  <i class="bi bi-chevron-right"></i>
+  <span class="bc-current">New Period</span>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-calendar-plus" style="color:var(--gold);font-size:1.1rem"></i> New Payroll Period</div>
+    <div class="page-subtitle">Opens a new monthly payroll for one client organization.</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+@media (max-width: 767px) { .form-grid-2 { grid-template-columns: 1fr; } }
+</style>
+<div class="card">
+  <div style="padding:28px">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div style="color:var(--red);margin-bottom:12px">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Organization *</label>
+          {{ form.company }}
+          {% if form.company.errors %}<div class="form-error">{{ form.company.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Month *</label>
+          {{ form.month }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Year *</label>
+          {{ form.year }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payroll Date *</label>
+          {{ form.payroll_date }}
+        </div>
+        <div class="form-group" style="grid-column:span 2">
+          <label class="form-label">Remarks</label>
+          {{ form.remarks }}
+        </div>
+      </div>
+      <div style="margin-top:24px;display:flex;justify-content:flex-end;gap:10px">
+        <a href="{% url 'payroll:period-list' %}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-gold"><i class="bi bi-check2-circle"></i> Create Period</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

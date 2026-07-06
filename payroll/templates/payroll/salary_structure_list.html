@@ -1,0 +1,49 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Salary Structures{% endblock %}
+{% block breadcrumb %}
+  <a href="{% url 'payroll:period-list' %}" style="color:inherit">Payroll</a>
+  <i class="bi bi-chevron-right"></i><span class="bc-current">Salary Structures</span>
+{% endblock %}
+{% block page_header %}
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-diagram-3" style="color:var(--gold)"></i> Salary Structures</div>
+    <div class="page-subtitle">Reusable salary templates assigned to staff (e.g. "Security Officer Grade II").</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'payroll:structure-create' %}" class="btn btn-gold"><i class="bi bi-plus-lg"></i> New Structure</a>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="card">
+  <div style="padding:0">
+    <table style="width:100%;border-collapse:collapse;font-size:.86rem">
+      <thead>
+        <tr style="text-align:left;font-size:.7rem;text-transform:uppercase;color:var(--text-muted)">
+          <th style="padding:12px 16px;border-bottom:1px solid var(--border)">Name</th>
+          <th style="padding:12px 16px;border-bottom:1px solid var(--border)">Organization</th>
+          <th style="padding:12px 16px;border-bottom:1px solid var(--border)">Gross</th>
+          <th style="padding:12px 16px;border-bottom:1px solid var(--border)">Net</th>
+          <th style="padding:12px 16px;border-bottom:1px solid var(--border)"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in structures %}
+        <tr>
+          <td style="padding:10px 16px;border-bottom:1px solid var(--border)">{{ s.name }} <span style="color:var(--text-muted)">({{ s.code }})</span></td>
+          <td style="padding:10px 16px;border-bottom:1px solid var(--border)">{{ s.company.name }}</td>
+          <td style="padding:10px 16px;border-bottom:1px solid var(--border)">₦{{ s.gross_salary|floatformat:2 }}</td>
+          <td style="padding:10px 16px;border-bottom:1px solid var(--border)">₦{{ s.net_salary|floatformat:2 }}</td>
+          <td style="padding:10px 16px;border-bottom:1px solid var(--border);text-align:right">
+            <a href="{% url 'payroll:structure-update' s.pk %}" class="btn btn-outline btn-sm">Edit</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted)">No salary structures yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

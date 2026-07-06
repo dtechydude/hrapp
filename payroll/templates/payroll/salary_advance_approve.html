@@ -1,0 +1,26 @@
+{% extends "dashboard/base.html" %}
+{% block title %}Approve Advance{% endblock %}
+{% block breadcrumb %}
+  <a href="{% url 'payroll:advance-list' %}" style="color:inherit">Salary Advances</a>
+  <i class="bi bi-chevron-right"></i><span class="bc-current">Approve</span>
+{% endblock %}
+{% block page_header %}
+<div class="page-header"><div><div class="page-title"><i class="bi bi-check2-square" style="color:var(--gold)"></i> Approve Advance — {{ object.staff.full_name }}</div><div class="page-subtitle">Requested: ₦{{ object.amount_requested|floatformat:2 }} — {{ object.reason }}</div></div></div>
+{% endblock %}
+{% block content %}
+<style>.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}@media(max-width:767px){.form-grid-2{grid-template-columns:1fr}}</style>
+<div class="card"><div style="padding:28px">
+<form method="post">
+  {% csrf_token %}
+  <div class="form-grid-2">
+    <div class="form-group"><label class="form-label">Amount Approved *</label>{{ form.amount_approved }}</div>
+    <div class="form-group"><label class="form-label">Monthly Deduction *</label>{{ form.monthly_deduction }}</div>
+    <div class="form-group" style="grid-column:span 2"><label class="form-label">Comments</label>{{ form.comments }}</div>
+  </div>
+  <div style="margin-top:24px;display:flex;justify-content:flex-end;gap:10px">
+    <a href="{% url 'payroll:advance-list' %}" class="btn btn-outline">Cancel</a>
+    <button type="submit" class="btn btn-gold">Approve</button>
+  </div>
+</form>
+</div></div>
+{% endblock %}

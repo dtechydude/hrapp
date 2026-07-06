@@ -25,59 +25,51 @@ class PayrollMonth(models.IntegerChoices):
     DECEMBER = 12, "December"
 
 
-class ComponentType(models.TextChoices):
+class ComponentNature(models.TextChoices):
+    """
+    The one thing that actually matters for gross/net arithmetic:
+    does this component ADD to pay or SUBTRACT from it. Kept
+    separate from ComponentCategory (below) because "what kind of
+    thing is this" (Housing vs. PAYE vs. Loan) and "does it add or
+    subtract" are two different questions — collapsing them into one
+    enum is what caused the original ComponentType/ComponentCategory
+    duplication and the undefined `.EARNING` bug.
+    """
 
-    BASIC = "Basic", "Basic Salary"
-
-    ALLOWANCE = "Allowance", "Allowance"
-
+    EARNING = "Earning", "Earning"
     DEDUCTION = "Deduction", "Deduction"
 
-    TAX = "Tax", "Tax"
 
-    PENSION = "Pension", "Pension"
+class ComponentCategory(models.TextChoices):
+    """
+    The single, consolidated classification for a salary component.
+    Replaces the old ComponentType + ComponentCategory pair, which
+    listed almost the same values twice under two different names.
+    """
 
+    BASIC = "Basic", "Basic Salary"
+    ALLOWANCE = "Allowance", "Allowance"
     BONUS = "Bonus", "Bonus"
-
     OVERTIME = "Overtime", "Overtime"
-
-    LOAN = "Loan", "Loan"
-
-    ADVANCE = "Advance", "Salary Advance"
-
-    PENALTY = "Penalty", "Penalty"
-
     REIMBURSEMENT = "Reimbursement", "Reimbursement"
+
+    TAX = "Tax", "Tax"
+    PENSION = "Pension", "Pension"
+    NHF = "NHF", "National Housing Fund"
+    LOAN = "Loan", "Loan Repayment"
+    ADVANCE = "Advance", "Salary Advance"
+    PENALTY = "Penalty", "Penalty"
+    DEDUCTION = "Deduction", "Other Deduction"
 
     OTHER = "Other", "Other"
 
 
 class ComponentCalculation(models.TextChoices):
-
     FIXED = "Fixed", "Fixed Amount"
-
     PERCENTAGE = "Percentage", "Percentage"
-
     FORMULA = "Formula", "Formula"
-
     MANUAL = "Manual", "Manual Entry"
-
     SYSTEM = "System", "Calculated by System"
-    
-
-# class PaymentMethod(models.TextChoices):
-#     BANK_TRANSFER = "Bank Transfer", "Bank Transfer"
-#     CASH = "Cash", "Cash"
-#     CHEQUE = "Cheque", "Cheque"
-#     MOBILE_MONEY = "Mobile Money", "Mobile Money"
-
-
-# class PaymentStatus(models.TextChoices):
-#     PENDING = "Pending", "Pending"
-#     PROCESSING = "Processing", "Processing"
-#     SUCCESSFUL = "Successful", "Successful"
-#     FAILED = "Failed", "Failed"
-#     REVERSED = "Reversed", "Reversed"
 
 
 class DeductionType(models.TextChoices):
@@ -107,9 +99,6 @@ class AllowanceType(models.TextChoices):
     SHIFT = "Shift", "Shift Allowance"
     HAZARD = "Hazard", "Hazard Allowance"
     OTHER = "Other", "Other"
-
-
-
 
 
 class PaymentMethod(models.TextChoices):
@@ -155,3 +144,24 @@ class ApprovalStatus(models.TextChoices):
     PENDING = "PENDING", "Pending"
     APPROVED = "APPROVED", "Approved"
     REJECTED = "REJECTED", "Rejected"
+
+
+class DeductionFrequency(models.TextChoices):
+    RECURRING = "Recurring", "Recurring (every payroll)"
+    ONE_TIME = "One-Time", "One-Time"
+
+
+class RequestStatus(models.TextChoices):
+    PENDING = "Pending", "Pending Approval"
+    APPROVED = "Approved", "Approved"
+    REJECTED = "Rejected", "Rejected"
+    CANCELLED = "Cancelled", "Cancelled"
+
+
+class AdvanceStatus(models.TextChoices):
+    PENDING = "Pending", "Pending Approval"
+    APPROVED = "Approved", "Approved"
+    ACTIVE = "Active", "Being Repaid"
+    SETTLED = "Settled", "Fully Repaid"
+    REJECTED = "Rejected", "Rejected"
+    CANCELLED = "Cancelled", "Cancelled"
