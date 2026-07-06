@@ -1,0 +1,93 @@
+{% extends "dashboard/base_employee.html" %}
+{% load static %}
+
+{% block title %}My Payslips{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'dashboard:staff-home' %}" style="color:inherit">My Dashboard</a>
+  <i class="bi bi-chevron-right"></i>
+  <span class="bc-current">My Payslips</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.payslip-filter-row { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.payslip-filter-row .form-group { min-width: 160px; }
+.payslip-filter-row label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); display: block; margin-bottom: 4px; }
+
+@media (max-width: 767px) {
+  .data-table thead { display: none; }
+  .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; width: 100%; }
+  .data-table tr { border: 1px solid var(--border); border-radius: var(--radius-sm,8px); margin: 12px; }
+  .data-table td { display: flex; justify-content: space-between; padding: 8px 14px; border-bottom: 1px dashed var(--border); text-align: right; }
+  .data-table td::before { content: attr(data-label); font-weight: 700; font-size: .68rem; text-transform: uppercase; color: var(--text-muted); text-align: left; }
+}
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+  <div>
+    <div class="page-title"><i class="bi bi-cash-stack" style="color:var(--gold);font-size:1.1rem"></i> My Payslips</div>
+    <div class="page-subtitle">Every payslip issued to you, oldest history included — nothing is ever removed.</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_content %}
+
+<div class="card">
+  <div class="card-body" style="padding:0">
+    {% if payrolls %}
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Period</th><th>Organization</th><th>Gross</th><th>Deductions</th><th>Net Pay</th><th>Status</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for payroll in payrolls %}
+          <tr>
+            <td data-label="Period">{{ payroll.period }}</td>
+            <td data-label="Organization">{{ payroll.payroll_period.company.name }}</td>
+            <td data-label="Gross">₦{{ payroll.gross_salary|floatformat:2 }}</td>
+            <td data-label="Deductions">₦{{ payroll.total_deductions|floatformat:2 }}</td>
+            <td data-label="Net Pay" style="font-weight:700;color:var(--navy)">₦{{ payroll.net_salary|floatformat:2 }}</td>
+            <td data-label="Status">
+              <span class="pill {% if payroll.status == 'Paid' %}active{% else %}pending{% endif %}">{{ payroll.status }}</span>
+            </td>
+            <td data-label="">
+              <a href="{% url 'payroll:my_payslip_print' payroll.pk %}" target="_blank" class="btn btn-outline btn-sm">
+                <i class="bi bi-printer"></i> View / Print
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--border);flex-wrap:wrap;gap:10px">
+      <span style="font-size:.8rem;color:var(--text-muted)">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+      <div style="display:flex;gap:8px">
+        {% if page_obj.has_previous %}
+        <a class="btn btn-outline btn-sm" href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i> Previous</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+        <a class="btn btn-outline btn-sm" href="?page={{ page_obj.next_page_number }}">Next <i class="bi bi-chevron-right"></i></a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-hint">No payslips have been generated for you yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

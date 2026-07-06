@@ -57,7 +57,7 @@ EmploymentHistory = _safe_import("employees.models", "EmploymentHistory")
 def get_recent_payslips(staff, limit: int = 6):
     if Payslip is None:
         return []
-    return list(Payslip.objects.filter(staff=staff).order_by("-pay_date")[:limit])
+    return list(Payslip.objects.filter(payroll__staff=staff).order_by("-generated_at")[:limit])
 
 
 def get_leave_summary(staff) -> dict:

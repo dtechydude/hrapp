@@ -204,6 +204,20 @@ class Payroll(models.Model):
         return self.payment_status == PaymentStatus.PAID
 
     @property
+    def period(self):
+        """
+        Convenience alias for templates — avoids every payroll
+        template needing to know it's `payroll_period.period_name`
+        under the hood.
+        """
+        return self.payroll_period.period_name
+
+    @property
+    def status(self):
+        """Convenience alias for `payment_status`, for the same reason."""
+        return self.payment_status
+
+    @property
     def outstanding_amount(self):
 
         if self.is_paid:

@@ -196,7 +196,7 @@
       <div class="sb-group">Payroll &amp; Benefits</div>
 
       {% comment %} <a href="{% url 'payroll:my_payslips' %}" class="sb-item {% if 'payroll' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
-      <a href="#" class="sb-item {% if 'payroll' in request.resolver_match.namespace %}active{% endif %}">
+      <a href="{% url 'payroll:my_payslips' %}" class="sb-item {% if 'payroll' in request.resolver_match.namespace %}active{% endif %}">
 
         <i class="bi bi-cash-stack sb-icon"></i>
         <span class="sb-label">My Payslips</span>

@@ -21,6 +21,11 @@ urlpatterns = [
     # Payslip
     path("payslip/<int:pk>/", views.PayslipPrintView.as_view(), name="payslip-print"),
 
+    # Employee self-service — matches the URL names already referenced
+    # (commented out, pending this) in employee_home.html
+    path("my/payslips/", views.MyPayslipListView.as_view(), name="my_payslips"),
+    path("my/payslips/<int:pk>/", views.MyPayslipPrintView.as_view(), name="my_payslip_print"),
+
     # Salary structures
     path("structures/", views.SalaryStructureListView.as_view(), name="structure-list"),
     path("structures/new/", views.SalaryStructureCreateView.as_view(), name="structure-create"),
