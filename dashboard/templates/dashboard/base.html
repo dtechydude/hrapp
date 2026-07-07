@@ -5,8 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}HRPAMS{% endblock %} — HRPAMS Enterprise Suite</title>
-  <link rel="shortcut icon" type="image/png" href="{% static 'dashboard/images/favicon.png' %}" />
 
+ <!-- favicon --> 
+  <link rel="shortcut icon" type="image/png" href="{% static 'dashboard/images/favicon.png' %}" />
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
@@ -63,6 +64,10 @@
       <a href="{% url 'dashboard:app-home' %}" class="sb-item {% block nav_dashboard %}{% endblock %}">
         <i class="bi bi-speedometer2 sb-icon"></i>
         <span class="sb-label">Dashboard</span>
+      </a>
+       <a href="/admin/" class="sb-item">
+        <i class="bi bi-speedometer2 sb-icon"></i>
+        <span class="sb-label" style="color:red;"> <strong>ADMIN PANEL</strong></span>
       </a>
 
       <!-- HUMAN RESOURCES -->

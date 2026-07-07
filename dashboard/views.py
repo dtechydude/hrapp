@@ -232,7 +232,7 @@ def admin_dashboard(request):
 
     # Django administrators / HR / Managers
     if request.user.is_superuser or request.user.is_staff:
-        return redirect("dashboard:admin-home")
+        return redirect("dashboard:app-home")
 
     # Normal employee
     return redirect("dashboard:staff-home")
@@ -349,7 +349,7 @@ class DashboardHomeView(LoginRequiredMixin, View):
         Redirect to the dedicated Management Dashboard view class instead of
         rendering the employee home with missing parameters.
         """
-        return redirect("dashboard:admin-home")
+        return redirect("dashboard:app-home")
 
     # ── Employee Self-Service dashboard ──────────────────────────────
     def _render_employee_dashboard(self, request):
