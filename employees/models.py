@@ -119,6 +119,16 @@ class Staff(models.Model):
         null=True,
     )
 
+    pension_pin = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    custodian_name = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
     date_employed = models.DateField()
 
     confirmation_date = models.DateField(

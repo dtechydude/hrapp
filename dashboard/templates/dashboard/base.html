@@ -137,6 +137,13 @@
         {% if payroll_pending %}<span class="sb-badge">!</span>{% endif %}
       </button>
       <div class="sb-sub {% block nav_payroll_sub %}{% endblock %}" id="sub-payroll">
+        <a href="{% url 'payroll:period-create' %}" class="sb-sub-item">Create Payroll Period</a>
+        <a href="{% url 'payroll:period-list' %}" class="sb-sub-item">Payroll Period List</a>
+        <a href="{% url 'payroll:structure-create' %}" class="sb-sub-item">Create Payroll Structure</a>
+        <a href="{% url 'payroll:structure-list' %}" class="sb-sub-item">Payroll Structure List</a>
+
+
+
         <a href="#" class="sb-sub-item {% block nav_payroll_run %}{% endblock %}">Run Payroll</a>
         <a href="#" class="sb-sub-item {% block nav_payroll_history %}{% endblock %}">Payroll History</a>
         <a href="#" class="sb-sub-item {% block nav_payroll_components %}{% endblock %}">Salary Components</a>

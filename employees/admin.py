@@ -87,6 +87,9 @@ class StaffAdmin(admin.ModelAdmin):
                     "state_of_origin",
                     "nationality",
                     "marital_status",
+                    "pension_pin",
+                    "custodian_name",
+                    
                 )
             },
         ),

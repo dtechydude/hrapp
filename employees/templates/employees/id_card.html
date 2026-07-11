@@ -11,48 +11,129 @@
 
 {% block extra_css %}
 <style>
-.idcard-wrap { display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start; }
-@media (max-width: 900px) { .idcard-wrap { grid-template-columns: 1fr; } }
+.idcard-wrap { display:grid; grid-template-columns: 300px 1fr; gap:24px; align-items:start; }
+@media (max-width: 900px) { .idcard-wrap { grid-template-columns: 1fr; justify-items:center; } }
 
-/* ── The card preview — CR80 badge proportions, scaled up for on-screen viewing ── */
+/* ═══════════════════════════════════════════════════════════
+   Portrait staff badge — modern vertical CR80-style layout
+   Ratio ≈ 53.98mm × 85.6mm (standard portrait badge stock)
+   ═══════════════════════════════════════════════════════════ */
 .badge-card {
-  width: 320px; height: 202px; border-radius: 14px;
-  background: linear-gradient(155deg, var(--navy) 0%, #14284e 100%);
+  width: 272px;
+  aspect-ratio: 54 / 85.6;
+  border-radius: 20px;
+  background: linear-gradient(165deg, var(--navy) 0%, #14284e 78%, #0d2145 100%);
   color: #fff; position: relative; overflow: hidden;
-  box-shadow: var(--shadow-lg); padding: 16px 18px;
+  box-shadow: var(--shadow-lg);
   display: flex; flex-direction: column;
+  isolation: isolate;
 }
 .badge-card::before {
   content:''; position:absolute; inset:0;
-  background-image: linear-gradient(rgba(201,168,76,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,.06) 1px, transparent 1px);
-  background-size: 18px 18px; pointer-events:none;
+  background-image:
+    linear-gradient(rgba(201,168,76,.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201,168,76,.055) 1px, transparent 1px);
+  background-size: 16px 16px;
+  pointer-events:none; z-index:0;
 }
-.badge-top { display:flex; align-items:center; gap:8px; position:relative; z-index:1; }
-.badge-brand-icon { width:26px; height:26px; background:var(--gold); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:800; font-size:.65rem; color:var(--navy); flex-shrink:0; }
-.badge-brand-text { font-family:var(--font-display); font-weight:800; font-size:.78rem; line-height:1.1; }
-.badge-brand-text small { display:block; font-size:.55rem; font-weight:500; color:var(--gold); letter-spacing:.06em; text-transform:uppercase; }
-.badge-body { display:flex; gap:14px; margin-top:14px; position:relative; z-index:1; flex:1; }
-.badge-photo {
-  width:74px; height:88px; border-radius:8px; flex-shrink:0;
-  background: var(--gold-muted); border:2px solid var(--gold-border);
+.badge-card::after {
+  /* soft gold glow behind the photo, purely decorative */
+  content:''; position:absolute; top:-40px; left:50%; translate:-50% 0;
+  width:220px; height:220px; border-radius:50%;
+  background: radial-gradient(circle, rgba(201,168,76,.22) 0%, transparent 70%);
+  pointer-events:none; z-index:0;
+}
+
+/* ── Top brand strip ── */
+.badge-topbar {
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  padding: 14px 14px 0; position:relative; z-index:2;
+}
+.badge-brand-icon {
+  width:22px; height:22px; background:var(--gold); border-radius:6px;
   display:flex; align-items:center; justify-content:center;
-  font-family:var(--font-display); font-weight:800; font-size:1.5rem; color:var(--gold);
-  overflow:hidden;
+  font-family:var(--font-display); font-weight:800; font-size:.58rem; color:var(--navy);
+  flex-shrink:0;
+}
+.badge-brand-text {
+  font-family:var(--font-display); font-weight:800; font-size:.72rem;
+  letter-spacing:.03em; line-height:1;
+}
+.badge-brand-text small {
+  display:block; font-size:.5rem; font-weight:500; color:var(--gold);
+  letter-spacing:.08em; text-transform:uppercase; margin-top:1px;
+}
+
+/* ── Status ribbon, top-right corner ── */
+.badge-status-strip {
+  position:absolute; top:0; right:0; z-index:3;
+  font-size:.52rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  padding:5px 12px 5px 14px;
+  border-bottom-left-radius:14px;
+}
+.badge-status-strip.active  { background:var(--green); color:#fff; }
+.badge-status-strip.expired { background:var(--amber); color:#fff; }
+.badge-status-strip.revoked { background:var(--red);   color:#fff; }
+
+/* ── Photo, centered, circular-square with gold ring ── */
+.badge-photo-wrap {
+  display:flex; justify-content:center; margin-top:14px; position:relative; z-index:2;
+}
+.badge-photo {
+  width:104px; height:104px; border-radius:22px;
+  background: var(--gold-muted); border:3px solid var(--gold-border);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-weight:800; font-size:2rem; color:var(--gold);
+  overflow:hidden; box-shadow: 0 6px 18px rgba(0,0,0,.25);
 }
 .badge-photo img { width:100%; height:100%; object-fit:cover; }
-.badge-info { flex:1; min-width:0; }
-.badge-name { font-family:var(--font-display); font-weight:800; font-size:.95rem; line-height:1.2; }
-.badge-role { font-size:.68rem; color:var(--gold); font-weight:600; margin-top:2px; }
-.badge-meta { margin-top:8px; font-size:.63rem; color:rgba(255,255,255,.75); line-height:1.6; }
-.badge-meta b { color:#fff; font-weight:600; }
-.badge-bottom { display:flex; align-items:flex-end; justify-content:space-between; margin-top:10px; position:relative; z-index:1; }
-.badge-cardno { font-family:monospace; font-size:.65rem; letter-spacing:.05em; color:rgba(255,255,255,.85); }
-.badge-qr { width:44px; height:44px; background:#fff; border-radius:4px; padding:3px; }
+
+/* ── Name / role block, centered ── */
+.badge-info { text-align:center; padding: 12px 16px 0; position:relative; z-index:2; }
+.badge-name { font-family:var(--font-display); font-weight:800; font-size:1rem; line-height:1.2; }
+.badge-role {
+  font-size:.68rem; color:var(--gold); font-weight:600; margin-top:3px;
+  text-transform:uppercase; letter-spacing:.04em;
+}
+
+/* ── Divider ── */
+.badge-divider {
+  height:1px; margin:12px 20px 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  position:relative; z-index:2;
+}
+
+/* ── Meta rows, compact key/value list ── */
+.badge-meta {
+  padding: 10px 20px 0; position:relative; z-index:2;
+  display:flex; flex-direction:column; gap:5px;
+}
+.badge-meta-row { display:flex; justify-content:space-between; font-size:.63rem; }
+.badge-meta-row .k { color:rgba(255,255,255,.55); }
+.badge-meta-row .v { color:#fff; font-weight:600; text-align:right; }
+
+/* ── Bottom block: QR + card number, pinned to the base ── */
+.badge-bottom {
+  margin-top:auto; position:relative; z-index:2;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding: 14px 16px 16px;
+}
+.badge-qr {
+  width:58px; height:58px; background:#fff; border-radius:8px; padding:4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
 .badge-qr img { width:100%; height:100%; }
-.badge-status-strip { position:absolute; top:0; right:0; font-size:.55rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:4px 10px; border-bottom-left-radius:8px; z-index:2; }
-.badge-status-strip.active   { background:var(--green); color:#fff; }
-.badge-status-strip.expired  { background:var(--amber); color:#fff; }
-.badge-status-strip.revoked  { background:var(--red); color:#fff; }
+.badge-cardno {
+  font-family:'Courier New',monospace; font-size:.66rem; letter-spacing:.06em;
+  color:rgba(255,255,255,.9); text-align:center;
+}
+.badge-valid {
+  font-size:.55rem; color:rgba(255,255,255,.55); text-align:center; margin-top:-4px;
+}
+.badge-footer-bar {
+  height:6px; width:100%;
+  background: linear-gradient(90deg, var(--gold), #e2c878, var(--gold));
+}
 
 .info-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:.84rem; }
 .info-row:last-child { border-bottom:none; }
@@ -81,7 +162,7 @@
 {% block content %}
 <div class="idcard-wrap">
 
-  {# ══════════ Card preview ══════════ #}
+  {# ══════════ Card preview (portrait) ══════════ #}
   <div>
     <div class="badge-card">
       {% if id_card.is_expired %}
@@ -92,12 +173,12 @@
         <div class="badge-status-strip active">Active</div>
       {% endif %}
 
-      <div class="badge-top">
+      <div class="badge-topbar">
         <div class="badge-brand-icon">HR</div>
-        <div class="badge-brand-text">HRPAMS<small>Staff Identification</small></div>
+        <div class="badge-brand-text">{{ corporate_info.name }}<small>Staff Identification</small></div>
       </div>
 
-      <div class="badge-body">
+      <div class="badge-photo-wrap">
         <div class="badge-photo">
           {% if staff.user.profile.image %}
             <img src="{{ staff.user.profile.image.url }}" alt="{{ staff.full_name }}">
@@ -105,28 +186,30 @@
             {{ staff.user.first_name|first|upper }}{{ staff.user.last_name|first|upper }}
           {% endif %}
         </div>
-        <div class="badge-info">
-          <div class="badge-name">{{ staff.full_name }}</div>
-          <div class="badge-role">{{ staff.staff_rank|default:staff.employment_type }}</div>
-          <div class="badge-meta">
-            <div><b>ID:</b> {{ staff.employee_no }}</div>
-            <div><b>Dept:</b> {{ deployment.department|default:"—" }}</div>
-            <div><b>Gender:</b> {{ staff.gender }}</div>
-          </div>
-        </div>
+      </div>
+
+      <div class="badge-info">
+        <div class="badge-name">{{ staff.full_name }}</div>
+        <div class="badge-role">{{ staff.staff_rank|default:staff.employment_type }}</div>
+      </div>
+
+      <div class="badge-divider"></div>
+
+      <div class="badge-meta">
+        <div class="badge-meta-row"><span class="k">ID</span><span class="v">{{ staff.employee_no }}</span></div>
+        <div class="badge-meta-row"><span class="k">Dept</span><span class="v">{{ deployment.department|default:"—" }}</span></div>
+        <div class="badge-meta-row"><span class="k">Gender</span><span class="v">{{ staff.gender }}</span></div>
       </div>
 
       <div class="badge-bottom">
-        <div>
-          <div class="badge-cardno">{{ id_card.card_number }}</div>
-          <div style="font-size:.55rem;color:rgba(255,255,255,.6);margin-top:2px">
-            Valid thru {{ id_card.expiry_date|date:"M Y" }}
-          </div>
-        </div>
         {% if id_card.qr_code %}
         <div class="badge-qr"><img src="{{ id_card.qr_code.url }}" alt="QR"></div>
         {% endif %}
+        <div class="badge-cardno">{{ id_card.card_number }}</div>
+        <div class="badge-valid">Valid thru {{ id_card.expiry_date|date:"M Y" }}</div>
       </div>
+
+      <div class="badge-footer-bar"></div>
     </div>
 
     {% if can_manage %}
