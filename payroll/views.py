@@ -21,6 +21,7 @@ from .forms import (
     StaffAllowanceForm,
     StaffBankAccountForm,
     StaffDeductionForm,
+    MySalaryAdvanceRequestForm,
 )
 from .models import (
     Bonus,
@@ -36,6 +37,7 @@ from .models import (
     StaffDeduction,
 )
 from .services import run_payroll
+from payroll.models import AdvanceStatus
 
 
 # ─────────────────────────────────────────────────────────────
@@ -645,3 +647,121 @@ class StaffBankAccountExportCSVView(ManagerRequiredMixin, View):
             ])
 
         return response
+
+# Salary Advance Logic
+# ─────────────────────────────────────────────────────────────
+# Append to payroll/views.py — three new classes for employee
+# self-service. Nothing above is touched: SalaryAdvanceListView,
+# SalaryAdvanceCreateView, and SalaryAdvanceApproveView remain the
+# admin-only (PermissionRequiredMixin) views exactly as they are.
+#
+# Requires two additions to the import block at the top of the file:
+#   from .choices import AdvanceStatus
+#   from .forms import MySalaryAdvanceRequestForm   (alongside the
+#       other .forms imports already there)
+# StaffRequiredMixin, SalaryAdvance, messages, reverse_lazy, ListView,
+# CreateView, and DetailView are all already imported in the file.
+# ─────────────────────────────────────────────────────────────
+
+class MySalaryAdvanceListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
+    """
+    Employee self-service: "My Salary Advances" — own requests, their
+    approval status, and the live repayment balance.
+
+    Same reasoning as MyPayslipListView: no special permission required
+    beyond being logged in with a linked staff profile — an ordinary
+    employee should never need payroll.view_salaryadvance just to see
+    their own advance history. The queryset itself is scoped to
+    staff=self.staff, which StaffRequiredMixin supplies.
+    """
+
+    model = SalaryAdvance
+    template_name = "payroll/my_salary_advances.html"
+    context_object_name = "advances"
+    paginate_by = 10
+
+    def get_queryset(self):
+        return (
+            SalaryAdvance.objects.filter(staff=self.staff)
+            .select_related("component")
+            .order_by("-requested_at")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["staff"] = self.staff
+        active_advance = (
+            SalaryAdvance.objects.filter(staff=self.staff, status=AdvanceStatus.ACTIVE)
+            .order_by("-requested_at")
+            .first()
+        )
+        if active_advance and active_advance.amount_approved:
+            active_advance.repaid_amount = active_advance.amount_approved - active_advance.balance
+            active_advance.progress_pct = round(
+                (active_advance.repaid_amount / active_advance.amount_approved) * 100
+            )
+        context["active_advance"] = active_advance
+        return context
+
+
+class MySalaryAdvanceCreateView(LoginRequiredMixin, StaffRequiredMixin, CreateView):
+    """
+    Employee self-service: apply for a salary advance.
+
+    Distinct from the admin-only SalaryAdvanceCreateView (which can
+    create an advance FOR any staff member and is gated behind
+    payroll.add_salaryadvance) — this view always creates the request
+    against the logged-in user's OWN staff profile. form.instance.staff
+    is set here in form_valid(), never trusted from POST data, so there
+    is no way to submit a request on someone else's behalf through
+    this URL.
+    """
+
+    model = SalaryAdvance
+    form_class = MySalaryAdvanceRequestForm
+    template_name = "payroll/my_salary_advance_form.html"
+    success_url = reverse_lazy("payroll:my-advances")
+
+    def form_valid(self, form):
+        form.instance.staff = self.staff
+        response = super().form_valid(form)
+        messages.success(
+            self.request,
+            "Your salary advance request has been submitted and is pending approval.",
+        )
+        return response
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["staff"] = self.staff
+        return context
+
+
+class MySalaryAdvanceDetailView(LoginRequiredMixin, StaffRequiredMixin, DetailView):
+    """
+    Employee self-service: one advance's full detail — status, running
+    balance, and every payroll deduction taken against it so far
+    (AdvanceRepayment rows), so a staff member can see exactly how much
+    came out of each payslip and when.
+
+    Filtering the queryset to staff=self.staff means requesting someone
+    else's advance ID 404s rather than 403s — same reasoning as
+    MyPayslipPrintView, so a curious employee can't confirm a given
+    advance ID belongs to a real colleague.
+    """
+
+    model = SalaryAdvance
+    template_name = "payroll/my_salary_advance_detail.html"
+    context_object_name = "advance"
+
+    def get_queryset(self):
+        return SalaryAdvance.objects.filter(staff=self.staff).select_related("component")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["repayments"] = (
+            self.object.repayments
+            .select_related("payroll", "payroll__payroll_period")
+            .order_by("-created_at")
+        )
+        return context

@@ -1,0 +1,110 @@
+{% extends "dashboard/base_employee.html" %}
+{% load static %}
+
+{% block title %}My Salary Advances{% endblock %}
+
+{% block breadcrumb %}<span class="bc-current">My Salary Advances</span>{% endblock %}
+
+{% block extra_css %}
+<style>
+.advance-summary { background: var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:20px; }
+.advance-summary .as-label { font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted); }
+.advance-summary .as-balance { font-family:var(--font-display); font-weight:800; font-size:1.6rem; color:var(--navy); margin-top:6px; }
+.advance-summary .as-sub { font-size:.78rem; color:var(--text-muted); margin-top:2px; }
+.as-progress-track { height:8px; border-radius:100px; background:var(--surface-2); margin-top:14px; overflow:hidden; }
+.as-progress-fill { height:100%; border-radius:100px; background:linear-gradient(90deg, var(--gold), var(--navy)); }
+.as-progress-labels { display:flex; justify-content:space-between; font-size:.72rem; color:var(--text-muted); margin-top:6px; }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header section-mb">
+  <div>
+    <div class="page-title">My Salary Advances</div>
+    <div class="page-subtitle">Request an advance and track repayment against your salary.</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'payroll:my-advance-request' %}" class="btn btn-gold btn-sm">
+      <i class="bi bi-cash-coin"></i> Request Advance
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_content %}
+
+{% if active_advance %}
+<div class="advance-summary">
+  <div class="as-label">Active Advance — {{ active_advance.component.name }}</div>
+  <div class="as-balance">₦{{ active_advance.balance|floatformat:0 }} <span style="font-size:.9rem;font-weight:500;color:var(--text-muted)">remaining</span></div>
+  <div class="as-sub">₦{{ active_advance.monthly_deduction|floatformat:0 }} deducted per pay run · ₦{{ active_advance.amount_approved|floatformat:0 }} approved</div>
+  <div class="as-progress-track">
+    <div class="as-progress-fill" style="width:{{ active_advance.progress_pct|default:0 }}%"></div>
+  </div>
+  <div class="as-progress-labels">
+    <span>₦{{ active_advance.repaid_amount|default:0|floatformat:0 }} repaid</span>
+    <span>₦{{ active_advance.balance|floatformat:0 }} left</span>
+  </div>
+  <div style="margin-top:14px;text-align:right">
+    <a href="{% url 'payroll:my-advance-detail' pk=active_advance.pk %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-list-ul"></i> View Deduction History
+    </a>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header"><div class="card-title"><i class="bi bi-cash-stack"></i> Request History</div></div>
+  <div class="card-body" style="padding:0">
+    {% if advances %}
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Requested</th><th>Component</th><th>Amount Requested</th><th>Approved</th><th>Balance</th><th>Status</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in advances %}
+          <tr>
+            <td>{{ a.requested_at|date:"d M Y" }}</td>
+            <td>{{ a.component.name }}</td>
+            <td>₦{{ a.amount_requested|floatformat:0 }}</td>
+            <td>₦{{ a.amount_approved|floatformat:0 }}</td>
+            <td>₦{{ a.balance|floatformat:0 }}</td>
+            <td>
+              <span class="pill {% if a.status == 'Active' %}active{% elif a.status == 'Settled' %}approved{% elif a.status == 'Rejected' %}suspended{% else %}pending{% endif %}">
+                {{ a.status }}
+              </span>
+            </td>
+            <td>
+              <a href="{% url 'payroll:my-advance-detail' pk=a.pk %}" class="btn btn-outline btn-sm">
+                <i class="bi bi-eye"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+    <div style="padding:16px; display:flex; justify-content:center; gap:8px">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">Previous</a>
+      {% endif %}
+      <span style="align-self:center; font-size:.8rem; color:var(--text-muted)">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-hint">You haven't requested a salary advance yet.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

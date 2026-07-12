@@ -19,6 +19,9 @@ from .models import (
     StaffDeduction,
 )
 
+from payroll. models import ComponentNature
+from .models import SalaryAdvance, SalaryComponent
+
 
 class PayrollPeriodForm(BootstrapModelForm):
     class Meta:
@@ -153,3 +156,51 @@ class StaffBankAccountForm(_StaffScopedForm):
     class Meta:
         model = StaffBankAccount
         fields = ["staff", "bank_name", "bank_code", "account_name", "account_number", "bvn"]
+
+
+# ─────────────────────────────────────────────────────────────
+# Append to payroll/forms.py — new form, does not touch
+# SalaryAdvanceRequestForm or SalaryAdvanceApprovalForm.
+# ─────────────────────────────────────────────────────────────
+
+class MySalaryAdvanceRequestForm(forms.ModelForm):
+    """
+    Employee self-service version of the advance request.
+
+    Deliberately excludes `staff`, `status`, `amount_approved`,
+    `monthly_deduction`, and `balance` — staff is set from the logged-in
+    user in the view (never trusted from POST data), status defaults to
+    PENDING on the model itself, and the rest are HR/approval-time
+    fields the employee has no business setting.
+
+    `component` is still asked for here because SalaryAdvance.component
+    is a required FK with no default — the employee picks which
+    deduction-nature payroll component this advance repays through,
+    limited to the same Deduction-nature constraint the model's own
+    clean() already enforces.
+    """
+
+    component = forms.ModelChoiceField(
+        queryset=SalaryComponent.objects.filter(
+            nature=ComponentNature.DEDUCTION, is_active=True
+        ),
+        label="Repayment Deduction Line",
+        help_text="Which payroll deduction this advance will be repaid through.",
+        empty_label="Select...",
+    )
+
+    class Meta:
+        model = SalaryAdvance
+        fields = ["component", "amount_requested", "reason"]
+        widgets = {
+            "reason": forms.Textarea(
+                attrs={"rows": 3, "placeholder": "Briefly explain why you need this advance..."}
+            ),
+        }
+
+    def clean_amount_requested(self):
+        amount = self.cleaned_data["amount_requested"]
+        if amount <= 0:
+            raise forms.ValidationError("Amount must be greater than zero.")
+        return amount
+

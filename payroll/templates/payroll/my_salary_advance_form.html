@@ -1,0 +1,96 @@
+{% extends "dashboard/base_employee.html" %}
+{% load static %}
+
+{% block title %}Request Salary Advance{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'payroll:my-advances' %}" style="color:inherit">My Salary Advances</a>
+  <i class="bi bi-chevron-right"></i>
+  <span class="bc-current">Request</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.field-group { margin-bottom: 18px; }
+.field-group label { display:block; font-weight:600; color:var(--text-secondary); margin-bottom:6px; font-size:.82rem; }
+.field-group .required { color:var(--red); margin-left:3px; }
+.field-group input, .field-group select, .field-group textarea {
+  width:100%; padding:11px 13px; border:1.5px solid var(--border); border-radius:8px;
+  font-size:.88rem; font-family:inherit; color:var(--text-primary); background:var(--surface-2);
+  transition:border-color .15s, box-shadow .15s;
+}
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus {
+  border-color:var(--gold); outline:none; box-shadow:0 0 0 3px var(--gold-muted); background:var(--surface);
+}
+.field-group textarea { resize:vertical; min-height:90px; }
+.field-error { color:var(--red); font-size:.76rem; margin-top:5px; }
+.form-errors { background:var(--red-bg,#FDECEC); border:1px solid rgba(239,68,68,.3); color:#8A1F1F; padding:12px 16px; border-radius:8px; font-size:.85rem; margin-bottom:18px; }
+.notice-box { background:var(--gold-muted); border:1px solid var(--gold-border); border-radius:10px; padding:14px 16px; font-size:.82rem; color:var(--text-secondary); margin-bottom:20px; display:flex; gap:10px; align-items:flex-start; }
+.notice-box i { color:var(--gold); margin-top:2px; }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header section-mb">
+  <div>
+    <div class="page-title">Request Salary Advance</div>
+    <div class="page-subtitle">Submit a request for HR/Payroll review.</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'payroll:my-advances' %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_content %}
+<div class="card" style="max-width:640px">
+  <div class="card-body">
+
+    <div class="notice-box">
+      <i class="bi bi-info-circle-fill"></i>
+      <div>
+        The amount and monthly deduction shown here are your <strong>request</strong>.
+        HR/Payroll reviews and sets the final approved amount and repayment
+        schedule — you'll see both on the request's detail page once reviewed.
+      </div>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="form-errors">
+      {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="field-group">
+        <label for="{{ form.component.id_for_label }}">Repayment Deduction Line <span class="required">*</span></label>
+        {{ form.component }}
+        {% if form.component.errors %}<div class="field-error">{{ form.component.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="field-group">
+        <label for="{{ form.amount_requested.id_for_label }}">Amount Requested <span class="required">*</span></label>
+        {{ form.amount_requested }}
+        {% if form.amount_requested.errors %}<div class="field-error">{{ form.amount_requested.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="field-group">
+        <label for="{{ form.reason.id_for_label }}">Reason <span class="required">*</span></label>
+        {{ form.reason }}
+        {% if form.reason.errors %}<div class="field-error">{{ form.reason.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px; padding-top:16px; border-top:1px solid var(--border)">
+        <a href="{% url 'payroll:my-advances' %}" class="btn btn-outline btn-sm">Cancel</a>
+        <button type="submit" class="btn btn-gold btn-sm">
+          <i class="bi bi-send-fill"></i> Submit Request
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

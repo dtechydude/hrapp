@@ -202,10 +202,10 @@
       </a>
 
       {% comment %} <a href="{% url 'loan:my_loans' %}" class="sb-item {% if 'loan' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
-      <a href="#" class="sb-item {% if 'loan' in request.resolver_match.namespace %}active{% endif %}">
+      <a href="{% url 'payroll:my-advances' %}" class="sb-item {% if 'loan' in request.resolver_match.namespace %}active{% endif %}">
 
         <i class="bi bi-bank2 sb-icon"></i>
-        <span class="sb-label">My Loans</span>
+        <span class="sb-label">My Loans & Advances</span>
       </a>
 
       <a href="{% url 'leave:my_requests' %}" class="sb-item {% if 'leave' in request.resolver_match.namespace %}active{% endif %}">
@@ -235,7 +235,7 @@
 
       <div class="sb-group">Account / Messages</div>
 
-       <a href="{% url 'password_reset' %}" class="sb-item {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}">
+       <a href="https://dyconnect.com.ng/hrforms/staffrequest/" class="sb-item {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}">
  
       <i class="bi bi-envelope-fill sb-icon"></i>
         <span class="sb-label" style="color:yellow;">Request/Complaint Form</span>

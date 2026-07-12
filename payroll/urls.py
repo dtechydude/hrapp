@@ -48,4 +48,10 @@ urlpatterns = [
     path("bank-accounts/new/", views.StaffBankAccountCreateView.as_view(), name="bank-account-create"),
     path("bank-accounts/", views.StaffBankAccountListView.as_view(), name="bank-account-list"),
     path("bank-accounts/export/", views.StaffBankAccountExportCSVView.as_view(), name="bank-account-export"),
+
+    # Salary Advance, Loan etc
+    path("my-advances/", views.MySalaryAdvanceListView.as_view(), name="my-advances"),
+    path("my-advances/request/", views.MySalaryAdvanceCreateView.as_view(), name="my-advance-request"),
+    path("my-advances/<int:pk>/", views.MySalaryAdvanceDetailView.as_view(), name="my-advance-detail"),
+
 ]

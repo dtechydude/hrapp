@@ -1,0 +1,98 @@
+{% extends "dashboard/base_employee.html" %}
+{% load static %}
+
+{% block title %}Salary Advance Detail{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'payroll:my-advances' %}" style="color:inherit">My Salary Advances</a>
+  <i class="bi bi-chevron-right"></i>
+  <span class="bc-current">Detail</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.detail-grid { display:grid; grid-template-columns: 1fr 300px; gap:24px; align-items:start; }
+@media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
+
+.info-row { display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--border); font-size:.84rem; }
+.info-row:last-child { border-bottom:none; }
+.info-row .lbl { color:var(--text-muted); }
+.info-row .val { font-weight:600; color:var(--text-primary); text-align:right; }
+
+.reason-block { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; font-size:.85rem; color:var(--text-secondary); line-height:1.6; margin-top:6px; }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header section-mb">
+  <div>
+    <div class="page-title">Salary Advance</div>
+    <div class="page-subtitle">{{ advance.component.name }} · Requested {{ advance.requested_at|date:"d M Y" }}</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'payroll:my-advances' %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-arrow-left"></i> Back to My Advances
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_content %}
+<div class="detail-grid">
+
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-cash-coin"></i> Request Details</div>
+        <span class="pill {% if advance.status == 'Active' %}active{% elif advance.status == 'Settled' %}approved{% elif advance.status == 'Rejected' %}suspended{% else %}pending{% endif %}">
+          {{ advance.status }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="info-row"><span class="lbl">Component</span><span class="val">{{ advance.component.name }}</span></div>
+        <div class="info-row"><span class="lbl">Amount Requested</span><span class="val">₦{{ advance.amount_requested|floatformat:0 }}</span></div>
+        <div class="info-row"><span class="lbl">Amount Approved</span><span class="val">₦{{ advance.amount_approved|floatformat:0 }}</span></div>
+        <div class="info-row"><span class="lbl">Monthly Deduction</span><span class="val">₦{{ advance.monthly_deduction|floatformat:0 }}</span></div>
+        <div class="info-row"><span class="lbl">Remaining Balance</span><span class="val">₦{{ advance.balance|floatformat:0 }}</span></div>
+        <div class="info-row"><span class="lbl">Requested On</span><span class="val">{{ advance.requested_at|date:"d F Y, H:i" }}</span></div>
+        {% if advance.approved_at %}
+        <div class="info-row"><span class="lbl">Reviewed By</span><span class="val">{{ advance.approved_by.get_full_name|default:advance.approved_by.username }}</span></div>
+        <div class="info-row"><span class="lbl">Reviewed On</span><span class="val">{{ advance.approved_at|date:"d F Y, H:i" }}</span></div>
+        {% if advance.comments %}
+        <div class="info-row"><span class="lbl">Comments</span><span class="val">{{ advance.comments }}</span></div>
+        {% endif %}
+        {% endif %}
+
+        <div style="margin-top:14px">
+          <div class="lbl" style="font-size:.82rem;color:var(--text-muted);margin-bottom:4px">Reason</div>
+          <div class="reason-block">{{ advance.reason|default:"—" }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-receipt-cutoff"></i> Deductions From Pay</div></div>
+      <div style="padding:0">
+        {% if repayments %}
+          {% for r in repayments %}
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-size:.83rem; font-weight:600; color:var(--text-primary)">
+                {{ r.payroll.payroll_period.period_name|default:r.created_at|date:"F Y" }}
+              </div>
+              <div style="font-size:.72rem; color:var(--text-muted)">{{ r.created_at|date:"d M Y" }}</div>
+            </div>
+            <div style="font-size:.85rem; font-weight:700; color:var(--navy)">-₦{{ r.amount|floatformat:0 }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-hint">No deductions have been taken against this advance yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
