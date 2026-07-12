@@ -82,6 +82,10 @@
         <a href="{% url 'employees:add-employee' %}" class="sb-sub-item {% block nav_staff_add %}{% endblock %}">Add New Staff</a>
         <a href="{% url 'organization:deployment-list' %}" class="sb-sub-item {% block nav_staff_history %}{% endblock %}">Deployment History</a>
         <a href="{% url 'organization:deployment-create' %}" class="sb-sub-item" > Create Deployment</a>
+        <a href="{% url 'payroll:bank-account-create' %}" class="sb-sub-item" > Create Staff Bank</a>
+        <a href="{% url 'payroll:bank-account-list' %}" class="sb-sub-item" > Bank Accounts List</a>
+
+
         <a href="#" class="sb-sub-item {% block nav_staff_promotions %}{% endblock %}">Promotions</a>
         <a href="#" class="sb-sub-item {% block nav_staff_suspensions %}{% endblock %}">Suspensions</a>
 
@@ -124,7 +128,7 @@
       </button>
       <div class="sb-sub {% block nav_leave_sub %}{% endblock %}" id="sub-leave">
         <a href="{% url 'leave:list' %}" class="sb-sub-item {% block nav_leave_requests %}{% endblock %}">Leave Requests</a>
-        <a href="#" class="sb-sub-item {% block nav_leave_calendar %}{% endblock %}">Leave Calendar</a>
+        <a href="{% url 'leave:on_leave' %}" class="sb-sub-item {% block nav_leave_calendar %}{% endblock %}">Staff On Leave</a>
         <a href="#" class="sb-sub-item {% block nav_leave_balances %}{% endblock %}">Leave Balances</a>
         <a href="#" class="sb-sub-item {% block nav_leave_types %}{% endblock %}">Leave Types</a>
       </div>

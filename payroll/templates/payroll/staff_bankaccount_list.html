@@ -1,0 +1,115 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Staff Bank Accounts{% endblock %}
+{% block breadcrumb %}<span class="bc-current">Staff Bank Accounts</span>{% endblock %}
+
+{% block extra_css %}
+<style>
+.search-bar { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+.search-bar input, .search-bar select {
+  padding:10px 14px; border:1.5px solid var(--border); border-radius:8px;
+  font-size:.86rem; background:var(--surface-2);
+}
+.search-bar input { flex:1; min-width:220px; }
+.search-bar input:focus, .search-bar select:focus { border-color:var(--gold); outline:none; box-shadow:0 0 0 3px var(--gold-muted); background:var(--surface); }
+
+.staff-cell { display:flex; align-items:center; gap:10px; }
+.staff-avatar { width:32px; height:32px; border-radius:50%; background:var(--gold-muted); border:1px solid var(--gold-border); color:var(--gold); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.75rem; font-family:var(--font-display); flex-shrink:0; }
+.staff-name { font-size:.84rem; font-weight:600; color:var(--text-primary); }
+.staff-sub { font-size:.72rem; color:var(--text-muted); }
+.acct-number { font-family:monospace; font-size:.84rem; letter-spacing:.03em; }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header section-mb">
+  <div>
+    <div class="page-title">Staff Bank Accounts</div>
+    <div class="page-subtitle">{{ total_count }} account{{ total_count|pluralize }} on file</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'payroll:bank-account-export' %}?q={{ query }}&bank={{ current_bank }}" class="btn btn-outline btn-sm">
+      <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+    </a>
+    <a href="{% url 'payroll:bank-account-create' %}" class="btn btn-gold btn-sm">
+      <i class="bi bi-plus-lg"></i> Add Bank Account
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<form method="get" class="search-bar">
+  <input type="text" name="q" placeholder="Search by name, employee no, bank, or account number..." value="{{ query }}">
+  <select name="bank">
+    <option value="">All Banks</option>
+    {% for bank in bank_choices %}
+    <option value="{{ bank }}" {% if bank == current_bank %}selected{% endif %}>{{ bank }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-outline btn-sm"><i class="bi bi-search"></i> Filter</button>
+   <button type="submit" class="btn btn-outline btn-sm"><a href="{% url 'payroll:bank-account-create' %}"> Create New</a></button>
+    <button type="submit" class="btn btn-outline btn-sm"><a href="{% url 'payroll:bank-account-export' %}"> Download CSV</a></button>
+
+</form>
+ 
+
+
+<div class="card">
+  <div class="card-body" style="padding:0">
+    {% if accounts %}
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Staff</th><th>Bank</th><th>Account Number</th><th>Account Name</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for acc in accounts %}
+          <tr>
+            <td>
+              <div class="staff-cell">
+                <div class="staff-avatar">{{ acc.staff.user.first_name|first|upper }}{{ acc.staff.user.last_name|first|upper }}</div>
+                <div>
+                  <div class="staff-name">{{ acc.staff.full_name }}</div>
+                  <div class="staff-sub">{{ acc.staff.employee_no }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ acc.bank_name }}</td>
+            <td class="acct-number">{{ acc.account_number }}</td>
+            <td>{{ acc.account_name }}</td>
+            <td>
+              <a href="{% url 'payroll:bank-account-create' %}?staff={{ acc.staff.uuid }}" class="btn btn-outline btn-sm">
+                <i class="bi bi-pencil"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+    <div style="padding:16px; display:flex; justify-content:center; gap:8px">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&bank={{ current_bank }}" class="btn btn-outline btn-sm">Previous</a>
+      {% endif %}
+      <span style="align-self:center; font-size:.8rem; color:var(--text-muted)">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&bank={{ current_bank }}" class="btn btn-outline btn-sm">Next</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-hint">No bank accounts match this filter.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

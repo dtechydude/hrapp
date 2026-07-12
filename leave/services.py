@@ -7,6 +7,8 @@ touch balance math or status transitions directly.
 """
 from __future__ import annotations
 
+from datetime import timedelta
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -122,3 +124,76 @@ def cancel_request(leave_request: LeaveRequest, cancelled_by) -> LeaveRequest:
     leave_request.updated_by = cancelled_by
     leave_request.save()
     return leave_request
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Staff-on-leave reporting (for the manager "Staff on Leave" dashboard)
+# ═══════════════════════════════════════════════════════════════════════
+
+def get_staff_currently_on_leave():
+    """
+    Approved leave requests where today falls within [start_date, end_date].
+    This is the "who is out right now" list.
+    """
+    today = timezone.localdate()
+    return (
+        LeaveRequest.objects.filter(
+            status=LeaveRequestStatus.APPROVED,
+            start_date__lte=today,
+            end_date__gte=today,
+        )
+        .select_related("staff", "staff__user", "leave_type")
+        .order_by("end_date")
+    )
+
+
+def get_upcoming_approved_leave(within_days: int = 14):
+    """
+    Approved leave requests that haven't started yet, starting within the
+    next `within_days` days — lets a manager see who's about to be out.
+    """
+    today = timezone.localdate()
+    horizon = today + timedelta(days=within_days)
+    return (
+        LeaveRequest.objects.filter(
+            status=LeaveRequestStatus.APPROVED,
+            start_date__gt=today,
+            start_date__lte=horizon,
+        )
+        .select_related("staff", "staff__user", "leave_type")
+        .order_by("start_date")
+    )
+
+
+def annotate_countdown(leave_requests, today=None):
+    """
+    Attaches in-memory (non-persisted) countdown fields to a list/queryset
+    of *currently active* approved LeaveRequest objects:
+
+      .elapsed_days   days of the leave period that have passed (incl. today)
+      .days_left      days remaining until (and including) the return date
+      .progress_pct   0-100, how far through the leave period they are
+
+    Returns a plain list (forces queryset evaluation) so the attributes
+    stick — Django querysets re-evaluate on iteration, which would wipe
+    ad-hoc attributes if left as a lazy queryset.
+    """
+    today = today or timezone.localdate()
+    results = []
+    for lr in leave_requests:
+        elapsed = (today - lr.start_date).days + 1
+        lr.elapsed_days = max(0, min(elapsed, lr.days_requested))
+        lr.days_left = max((lr.end_date - today).days, 0)
+        lr.progress_pct = round((lr.elapsed_days / lr.days_requested) * 100) if lr.days_requested else 0
+        results.append(lr)
+    return results
+
+
+def annotate_start_countdown(leave_requests, today=None):
+    """Attaches .days_until_start to a list/queryset of upcoming approved LeaveRequest objects."""
+    today = today or timezone.localdate()
+    results = []
+    for lr in leave_requests:
+        lr.days_until_start = (lr.start_date - today).days
+        results.append(lr)
+    return results

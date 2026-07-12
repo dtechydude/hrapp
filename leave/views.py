@@ -20,6 +20,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.generic import CreateView, DetailView, ListView, View
 
 from . import services
@@ -199,3 +200,38 @@ class LeaveRequestDeclineView(ManagerRequiredMixin, View):
         except ValidationError as exc:
             messages.error(request, str(exc))
         return redirect("leave:detail", uuid=leave_request.uuid)
+
+
+class StaffOnLeaveListView(ManagerRequiredMixin, ListView):
+    """
+    URL: /leave/on-leave/  (name: leave:on_leave)
+
+    Shows two groups, built from Approved leave requests only:
+      • Currently on leave — today falls within [start_date, end_date],
+        each with a days-remaining countdown and a progress bar.
+      • Upcoming (next 14 days) — approved leave that hasn't started yet.
+    """
+
+    model = LeaveRequest
+    template_name = "leave/staff_on_leave.html"
+    context_object_name = "current_leave"
+
+    def get_queryset(self):
+        return services.get_staff_currently_on_leave()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+
+        current_leave = services.annotate_countdown(ctx["current_leave"], today=today)
+        upcoming_leave = services.annotate_start_countdown(
+            services.get_upcoming_approved_leave(), today=today
+        )
+
+        ctx["current_leave"] = current_leave
+        ctx["upcoming_leave"] = upcoming_leave
+        ctx["returning_this_week_count"] = sum(1 for lr in current_leave if lr.days_left <= 7)
+        ctx["today"] = today
+        ctx["page_title"] = "Staff on Leave"
+        ctx["breadcrumb"] = "Staff on Leave"
+        return ctx

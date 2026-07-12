@@ -46,4 +46,6 @@ urlpatterns = [
 
     # Bank accounts
     path("bank-accounts/new/", views.StaffBankAccountCreateView.as_view(), name="bank-account-create"),
+    path("bank-accounts/", views.StaffBankAccountListView.as_view(), name="bank-account-list"),
+    path("bank-accounts/export/", views.StaffBankAccountExportCSVView.as_view(), name="bank-account-export"),
 ]

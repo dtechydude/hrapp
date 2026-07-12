@@ -1,0 +1,163 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Staff on Leave{% endblock %}
+
+{% block breadcrumb %}<span class="bc-current">Staff on Leave</span>{% endblock %}
+
+{% block extra_css %}
+<style>
+.on-leave-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:16px; margin-bottom:28px; }
+
+.leave-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px; position: relative; overflow: hidden;
+}
+.leave-card.returning-soon { border-color: var(--gold-border); }
+
+.lc-top { display:flex; align-items:center; gap:12px; }
+.lc-avatar {
+  width:42px; height:42px; border-radius:50%; background:var(--gold-muted); border:1.5px solid var(--gold-border);
+  color:var(--gold); display:flex; align-items:center; justify-content:center; font-weight:700;
+  font-family:var(--font-display); font-size:.85rem; flex-shrink:0;
+}
+.lc-name { font-size:.88rem; font-weight:700; color:var(--text-primary); }
+.lc-sub { font-size:.72rem; color:var(--text-muted); }
+
+.lc-type-pill {
+  display:inline-block; margin-top:12px; font-size:.68rem; font-weight:700; letter-spacing:.03em;
+  padding:3px 10px; border-radius:100px; background:var(--gold-muted); color:var(--gold); border:1px solid var(--gold-border);
+}
+
+.lc-dates { font-size:.76rem; color:var(--text-muted); margin-top:10px; }
+.lc-dates strong { color:var(--text-secondary); font-weight:600; }
+
+.lc-progress-track { height:6px; border-radius:100px; background:var(--surface-2); margin-top:12px; overflow:hidden; }
+.lc-progress-fill { height:100%; border-radius:100px; background: linear-gradient(90deg, var(--gold), var(--navy)); transition: width .3s; }
+
+.lc-countdown { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
+.lc-countdown-text { font-size:.78rem; font-weight:700; color:var(--navy); }
+.lc-countdown-text.soon { color:var(--gold); }
+.lc-countdown-text.today { color:var(--green); }
+.lc-review-link { font-size:.72rem; color:var(--text-muted); text-decoration:none; }
+.lc-review-link:hover { color:var(--navy); }
+
+.kpi-strip { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:26px; }
+
+.upcoming-item { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); gap:12px; flex-wrap:wrap; }
+.upcoming-item:last-child { border-bottom:none; }
+.upcoming-staff { display:flex; align-items:center; gap:10px; }
+.upcoming-avatar { width:32px; height:32px; border-radius:50%; background:var(--gold-muted); border:1px solid var(--gold-border); color:var(--gold); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.72rem; font-family:var(--font-display); flex-shrink:0; }
+.upcoming-name { font-size:.83rem; font-weight:600; color:var(--text-primary); }
+.upcoming-sub { font-size:.72rem; color:var(--text-muted); }
+.upcoming-countdown { font-size:.76rem; font-weight:700; color:var(--text-secondary); }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header section-mb">
+  <div>
+    <div class="page-title">Staff on Leave</div>
+    <div class="page-subtitle">Live view of who's currently out, based on approved leave requests</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'leave:list' %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-list-check"></i> All Leave Requests
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="kpi-strip">
+  <div class="kpi-card c-navy">
+    <div class="kpi-top"><div class="kpi-icon c-navy"><i class="bi bi-person-walking"></i></div></div>
+    <div class="kpi-value">{{ current_leave|length }}</div>
+    <div class="kpi-label">Currently on Leave</div>
+  </div>
+  <div class="kpi-card c-gold">
+    <div class="kpi-top"><div class="kpi-icon c-gold"><i class="bi bi-hourglass-split"></i></div></div>
+    <div class="kpi-value">{{ returning_this_week_count }}</div>
+    <div class="kpi-label">Returning Within 7 Days</div>
+  </div>
+  <div class="kpi-card c-blue">
+    <div class="kpi-top"><div class="kpi-icon c-blue"><i class="bi bi-calendar2-plus"></i></div></div>
+    <div class="kpi-value">{{ upcoming_leave|length }}</div>
+    <div class="kpi-label">Upcoming (Next 14 Days)</div>
+  </div>
+</div>
+
+<!-- ═══════════ Currently on leave ═══════════ -->
+<div class="card-title" style="margin-bottom:14px;display:flex;align-items:center;gap:8px">
+  <i class="bi bi-person-walking" style="color:var(--gold)"></i> Currently on Leave
+</div>
+
+{% if current_leave %}
+<div class="on-leave-grid">
+  {% for lr in current_leave %}
+  <div class="leave-card {% if lr.days_left <= 2 %}returning-soon{% endif %}">
+    <div class="lc-top">
+      <div class="lc-avatar">{{ lr.staff.user.first_name|first|upper }}{{ lr.staff.user.last_name|first|upper }}</div>
+      <div>
+        <div class="lc-name">{{ lr.staff.full_name }}</div>
+        <div class="lc-sub">{{ lr.staff.employee_no }} · {{ lr.staff.staff_rank|default:lr.staff.employment_type }}</div>
+      </div>
+    </div>
+
+    <span class="lc-type-pill">{{ lr.leave_type.name }}</span>
+
+    <div class="lc-dates">
+      <strong>{{ lr.start_date|date:"d M" }}</strong> → <strong>{{ lr.end_date|date:"d M Y" }}</strong>
+      &nbsp;({{ lr.days_requested }} day{{ lr.days_requested|pluralize }})
+    </div>
+
+    <div class="lc-progress-track">
+      <div class="lc-progress-fill" style="width:{{ lr.progress_pct }}%"></div>
+    </div>
+
+    <div class="lc-countdown">
+      {% if lr.days_left == 0 %}
+        <span class="lc-countdown-text today"><i class="bi bi-flag-fill"></i> Returns today</span>
+      {% elif lr.days_left == 1 %}
+        <span class="lc-countdown-text soon"><i class="bi bi-hourglass-split"></i> Returns tomorrow</span>
+      {% else %}
+        <span class="lc-countdown-text {% if lr.days_left <= 2 %}soon{% endif %}">
+          <i class="bi bi-hourglass-split"></i> Returns in {{ lr.days_left }} days
+        </span>
+      {% endif %}
+      <a href="{% url 'leave:detail' uuid=lr.uuid %}" class="lc-review-link">Details →</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-hint" style="margin-bottom:28px">No one is currently on approved leave.</div>
+{% endif %}
+
+<!-- ═══════════ Upcoming approved leave ═══════════ -->
+<div class="card">
+  <div class="card-header"><div class="card-title"><i class="bi bi-calendar2-plus"></i> Upcoming Approved Leave (Next 14 Days)</div></div>
+  <div style="padding:0">
+    {% if upcoming_leave %}
+      {% for lr in upcoming_leave %}
+      <div class="upcoming-item">
+        <div class="upcoming-staff">
+          <div class="upcoming-avatar">{{ lr.staff.user.first_name|first|upper }}{{ lr.staff.user.last_name|first|upper }}</div>
+          <div>
+            <div class="upcoming-name">{{ lr.staff.full_name }}</div>
+            <div class="upcoming-sub">{{ lr.leave_type.name }} · {{ lr.start_date|date:"d M" }} → {{ lr.end_date|date:"d M Y" }} ({{ lr.days_requested }}d)</div>
+          </div>
+        </div>
+        <div class="upcoming-countdown">
+          {% if lr.days_until_start == 1 %}Starts tomorrow{% else %}Starts in {{ lr.days_until_start }} days{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-hint">No approved leave starting in the next 14 days.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

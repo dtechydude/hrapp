@@ -505,3 +505,143 @@ class StaffBankAccountCreateView(LoginRequiredMixin, PermissionRequiredMixin, Cr
     template_name = "payroll/staff_bank_account_form.html"
     success_url = reverse_lazy("payroll:period-list")
     permission_required = "payroll.add_staffbankaccount"
+
+
+import csv
+from datetime import datetime
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+from django.http import HttpResponse
+from django.views.generic import ListView, View
+
+from .models import StaffBankAccount
+
+
+class ManagerRequiredMixin(LoginRequiredMixin):
+    """Superusers or is_staff only. Swap for an existing equivalent
+    mixin in your project if you already have one (e.g.
+    employees.mixins.StaffManagerRequiredMixin) — behavior is identical."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not (request.user.is_staff or request.user.is_superuser):
+            raise PermissionDenied("You do not have permission to view staff bank details.")
+        return super().dispatch(request, *args, **kwargs)
+
+
+class StaffBankAccountListView(ManagerRequiredMixin, ListView):
+    """
+    URL: /payroll/bank-accounts/   (name: payroll:bank-account-list)
+
+    Query params:
+      ?q=search        matches staff name, employee no, bank name, or account number
+      ?bank=Bank+Name   exact-match filter, populated from the distinct bank list
+    """
+
+    model = StaffBankAccount
+    template_name = "payroll/staff_bankaccount_list.html"
+    context_object_name = "accounts"
+    paginate_by = 25
+
+    def get_queryset(self):
+        qs = (
+            StaffBankAccount.objects.filter(is_active=True)
+            .select_related("staff", "staff__user")
+            .order_by("staff__user__first_name", "staff__user__last_name")
+        )
+
+        query = self.request.GET.get("q", "").strip()
+        if query:
+            qs = qs.filter(
+                Q(staff__user__first_name__icontains=query)
+                | Q(staff__user__last_name__icontains=query)
+                | Q(staff__employee_no__icontains=query)
+                | Q(bank_name__icontains=query)
+                | Q(account_number__icontains=query)
+            )
+
+        bank = self.request.GET.get("bank", "").strip()
+        if bank:
+            qs = qs.filter(bank_name=bank)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["page_title"] = "Staff Bank Accounts"
+        ctx["breadcrumb"] = "Staff Bank Accounts"
+        ctx["query"] = self.request.GET.get("q", "")
+        ctx["current_bank"] = self.request.GET.get("bank", "")
+        ctx["bank_choices"] = (
+            StaffBankAccount.objects.filter(is_active=True)
+            .order_by("bank_name")
+            .values_list("bank_name", flat=True)
+            .distinct()
+        )
+        ctx["total_count"] = self.get_queryset().count()
+        ctx["missing_count"] = (
+            self.model.objects.filter(is_active=True).exclude(
+                account_number__isnull=False
+            ).count()
+            if hasattr(self.model, "account_number")
+            else 0
+        )
+        return ctx
+
+
+class StaffBankAccountExportCSVView(ManagerRequiredMixin, View):
+    """
+    URL: /payroll/bank-accounts/export/   (name: payroll:bank-account-export)
+
+    Exports whatever the current search/filter would show in the list
+    view (same ?q= and ?bank= params honored) — so "export what I'm
+    looking at" just works, rather than always exporting everything.
+    """
+
+    def get(self, request, *args, **kwargs):
+        qs = (
+            StaffBankAccount.objects.filter(is_active=True)
+            .select_related("staff", "staff__user")
+            .order_by("staff__user__first_name", "staff__user__last_name")
+        )
+
+        query = request.GET.get("q", "").strip()
+        if query:
+            qs = qs.filter(
+                Q(staff__user__first_name__icontains=query)
+                | Q(staff__user__last_name__icontains=query)
+                | Q(staff__employee_no__icontains=query)
+                | Q(bank_name__icontains=query)
+                | Q(account_number__icontains=query)
+            )
+
+        bank = request.GET.get("bank", "").strip()
+        if bank:
+            qs = qs.filter(bank_name=bank)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="staff_bank_accounts_{timestamp}.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            "Employee No", "Full Name", "Bank Name",
+            "Account Number", "Account Name", "Department", "Status",
+        ])
+
+        for acc in qs:
+            deployment = getattr(acc.staff, "current_deployment", None)
+            writer.writerow([
+                acc.staff.employee_no,
+                acc.staff.full_name,
+                acc.bank_name,
+                acc.account_number,
+                acc.account_name,
+                getattr(deployment, "department", "") if deployment else "",
+                acc.staff.employment_status,
+            ])
+
+        return response

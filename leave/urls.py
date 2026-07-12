@@ -26,6 +26,7 @@ from .views import (
     LeaveRequestDetailView,
     LeaveRequestListView,
     MyLeaveRequestListView,
+    StaffOnLeaveListView,
 )
 
 app_name = "leave"
@@ -38,6 +39,7 @@ urlpatterns = [
 
     # Manager
     path("requests/", LeaveRequestListView.as_view(), name="list"),
+    path("on-leave/", StaffOnLeaveListView.as_view(), name="on_leave"),
     path("<uuid:uuid>/", LeaveRequestDetailView.as_view(), name="detail"),
     path("<uuid:uuid>/approve/", LeaveRequestApproveView.as_view(), name="approve"),
     path("<uuid:uuid>/decline/", LeaveRequestDeclineView.as_view(), name="decline"),
