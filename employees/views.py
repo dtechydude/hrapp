@@ -272,35 +272,6 @@ class StaffUpdateView(StaffManagerRequiredMixin, View):
 # Staff Detail
 # ─────────────────────────────────────────────────────────────────────────────
 
-# class StaffDetailView(OwnProfileOrStaffMixin, DetailView):
-#     """
-#     Read-only staff profile page.
-#     URL: /staff/<uuid>/
-#     """
-
-#     model = Staff
-#     template_name     = "employees/staff_detail.html"
-#     context_object_name = "staff"
-#     slug_field        = "uuid"
-#     slug_url_kwarg    = "uuid"
-
-#     def get_queryset(self):
-#         return Staff.objects.select_related(
-#             "user", "staff_rank", "created_by", "updated_by"
-#         ).prefetch_related("deployments__company", "deployments__department")
-
-#     def get_context_data(self, **kwargs):
-#         ctx = super().get_context_data(**kwargs)
-#         staff = self.object
-#         ctx["page_title"]    = staff.full_name
-#         ctx["page_subtitle"] = f"Employee No: {staff.employee_no}"
-#         ctx["breadcrumb"]    = "Staff Profile"
-#         ctx["can_edit"]      = (
-#             self.request.user.is_staff or self.request.user.is_superuser
-#         )
-#         ctx["deployment"] = staff.current_deployment
-#         return ctx
-
 
 class StaffDetailView(OwnProfileOrStaffMixin, DetailView):
     model = Staff

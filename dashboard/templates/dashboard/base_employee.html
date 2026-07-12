@@ -195,8 +195,7 @@
 
       <div class="sb-group">Payroll &amp; Benefits</div>
 
-      {% comment %} <a href="{% url 'payroll:my_payslips' %}" class="sb-item {% if 'payroll' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
-      <a href="{% url 'payroll:my_payslips' %}" class="sb-item {% if 'payroll' in request.resolver_match.namespace %}active{% endif %}">
+     <a href="{% url 'payroll:my_payslips' %}" class="sb-item {% if 'payroll' in request.resolver_match.namespace %}active{% endif %}">
 
         <i class="bi bi-cash-stack sb-icon"></i>
         <span class="sb-label">My Payslips</span>
@@ -209,12 +208,13 @@
         <span class="sb-label">My Loans</span>
       </a>
 
-      {% comment %} <a href="{% url 'leave:my_requests' %}" class="sb-item {% if 'leave' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
-      <a href="#" class="sb-item {% if 'leave' in request.resolver_match.namespace %}active{% endif %}">
+      <a href="{% url 'leave:my_requests' %}" class="sb-item {% if 'leave' in request.resolver_match.namespace %}active{% endif %}">
+      {% comment %} <a href="#" class="sb-item {% if 'leave' in request.resolver_match.namespace %}active{% endif %}"> {% endcomment %}
 
         <i class="bi bi-calendar2-check sb-icon"></i>
         <span class="sb-label">My Leave</span>
       </a>
+
 
       <div class="sb-group">Records</div>
 

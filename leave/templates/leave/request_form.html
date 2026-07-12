@@ -1,0 +1,154 @@
+{% extends "dashboard/base_employee.html" %}
+{% load static %}
+
+{% block title %}Apply for Leave{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'leave:my_requests' %}" style="color:inherit">My Leave</a>
+  <i class="bi bi-chevron-right"></i>
+  <span class="bc-current">Apply</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.leave-grid { display:grid; grid-template-columns: 1fr 300px; gap:24px; align-items:start; }
+@media (max-width: 900px) { .leave-grid { grid-template-columns: 1fr; } }
+
+.field-group { margin-bottom: 18px; }
+.field-group label { display:block; font-weight:600; color:var(--text-secondary); margin-bottom:6px; font-size:.82rem; }
+.field-group .required { color:var(--red); margin-left:3px; }
+.field-group input, .field-group select, .field-group textarea {
+  width:100%; padding:11px 13px; border:1.5px solid var(--border); border-radius:8px;
+  font-size:.88rem; font-family:inherit; color:var(--text-primary); background:var(--surface-2);
+  transition:border-color .15s, box-shadow .15s;
+}
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus {
+  border-color:var(--gold); outline:none; box-shadow:0 0 0 3px var(--gold-muted); background:var(--surface);
+}
+.field-group textarea { resize:vertical; min-height:100px; }
+.field-error { color:var(--red); font-size:.76rem; margin-top:5px; }
+.field-row { display:flex; gap:16px; flex-wrap:wrap; }
+.field-row .field-group { flex:1 1 200px; }
+.days-hint { font-size:.78rem; color:var(--text-muted); margin-top:-10px; margin-bottom:16px; }
+.days-hint strong { color:var(--navy); }
+.form-errors { background:var(--red-bg,#FDECEC); border:1px solid rgba(239,68,68,.3); color:#8A1F1F; padding:12px 16px; border-radius:8px; font-size:.85rem; margin-bottom:18px; }
+
+.balance-item { display:flex; justify-content:space-between; align-items:center; padding:11px 16px; border-bottom:1px solid var(--border); }
+.balance-item:last-child { border-bottom:none; }
+.balance-item .bl-type { font-size:.82rem; color:var(--text-secondary); }
+.balance-item .bl-days { font-size:.85rem; font-weight:700; color:var(--navy); }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header section-mb">
+  <div>
+    <div class="page-title">Apply for Leave</div>
+    <div class="page-subtitle">Submit a new leave request for HR review.</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'leave:my_requests' %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-arrow-left"></i> Back to My Leave
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_content %}
+<div class="leave-grid">
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="bi bi-calendar2-plus"></i> Leave Request Details</div></div>
+    <div class="card-body">
+
+      {% if form.non_field_errors %}
+      <div class="form-errors">
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="field-group">
+          <label for="{{ form.leave_type.id_for_label }}">Leave Type <span class="required">*</span></label>
+          {{ form.leave_type }}
+          {% if form.leave_type.errors %}<div class="field-error">{{ form.leave_type.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label for="{{ form.start_date.id_for_label }}">Start Date <span class="required">*</span></label>
+            {{ form.start_date }}
+            {% if form.start_date.errors %}<div class="field-error">{{ form.start_date.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="field-group">
+            <label for="{{ form.end_date.id_for_label }}">End Date <span class="required">*</span></label>
+            {{ form.end_date }}
+            {% if form.end_date.errors %}<div class="field-error">{{ form.end_date.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="days-hint" id="daysHint" style="display:none">
+          That's <strong id="daysCount">0</strong> day(s), inclusive.
+        </div>
+
+        <div class="field-group">
+          <label for="{{ form.reason.id_for_label }}">Reason <span class="required">*</span></label>
+          {{ form.reason }}
+          {% if form.reason.errors %}<div class="field-error">{{ form.reason.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px; padding-top:16px; border-top:1px solid var(--border)">
+          <a href="{% url 'leave:my_requests' %}" class="btn btn-outline btn-sm">Cancel</a>
+          <button type="submit" class="btn btn-gold btn-sm">
+            <i class="bi bi-send-fill"></i> Submit Request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><i class="bi bi-piggy-bank"></i> My Leave Balances</div></div>
+    <div style="padding:4px 0">
+      {% for b in balances %}
+      <div class="balance-item">
+        <span class="bl-type">{{ b.leave_type.name }}</span>
+        <span class="bl-days">{{ b.remaining_days }}/{{ b.entitled_days }} days</span>
+      </div>
+      {% empty %}
+      <div style="padding:20px 16px;text-align:center;font-size:.82rem;color:var(--text-muted)">
+        No balances on file yet — they're created automatically the first time you apply for a tracked leave type.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  const startEl = document.getElementById('{{ form.start_date.id_for_label }}');
+  const endEl = document.getElementById('{{ form.end_date.id_for_label }}');
+  const hint = document.getElementById('daysHint');
+  const countEl = document.getElementById('daysCount');
+  if (!startEl || !endEl) return;
+
+  function updateDays() {
+    const start = new Date(startEl.value);
+    const end = new Date(endEl.value);
+    if (startEl.value && endEl.value && end >= start) {
+      const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      countEl.textContent = diffDays;
+      hint.style.display = 'block';
+    } else {
+      hint.style.display = 'none';
+    }
+  }
+  startEl.addEventListener('change', updateDays);
+  endEl.addEventListener('change', updateDays);
+})();
+</script>
+{% endblock %}

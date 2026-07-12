@@ -1,0 +1,107 @@
+{% extends "dashboard/base_employee.html" %}
+{% load static %}
+
+{% block title %}My Leave{% endblock %}
+
+{% block breadcrumb %}<span class="bc-current">My Leave</span>{% endblock %}
+
+{% block extra_css %}
+<style>
+.balance-strip { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-bottom:20px; }
+.balance-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; }
+.balance-card .bc-type { font-size:.72rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-muted); }
+.balance-card .bc-remaining { font-family:var(--font-display); font-weight:800; font-size:1.3rem; color:var(--navy); margin-top:6px; }
+.balance-card .bc-of { font-size:.74rem; color:var(--text-muted); }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header section-mb">
+  <div>
+    <div class="page-title">My Leave</div>
+    <div class="page-subtitle">Track your requests and remaining balances.</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'leave:apply-leave' %}" class="btn btn-gold btn-sm">
+      <i class="bi bi-calendar2-plus"></i> Apply for Leave
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_content %}
+
+<div class="balance-strip">
+  {% for b in balances %}
+  <div class="balance-card">
+    <div class="bc-type">{{ b.leave_type.name }}</div>
+    <div class="bc-remaining">{{ b.remaining_days }} <span class="bc-of">days left</span></div>
+    <div class="bc-of">of {{ b.entitled_days }} entitled ({{ b.year }})</div>
+  </div>
+  {% empty %}
+  <div class="balance-card" style="grid-column:1/-1;text-align:center;color:var(--text-muted);font-size:.85rem">
+    No leave balances on file yet.
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title"><i class="bi bi-calendar2-week"></i> My Requests</div></div>
+  <div class="card-body" style="padding:0">
+    {% if requests %}
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Type</th><th>Dates</th><th>Days</th><th>Reason</th><th>Status</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in requests %}
+          <tr>
+            <td>{{ r.leave_type.name }}</td>
+            <td>{{ r.start_date|date:"d M Y" }} – {{ r.end_date|date:"d M Y" }}</td>
+            <td>{{ r.days_requested }}</td>
+            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.reason }}</td>
+            <td>
+              <span class="pill {% if r.status == 'Approved' %}active{% elif r.status == 'Declined' %}suspended{% elif r.status == 'Cancelled' %}draft{% else %}pending{% endif %}">
+                {{ r.status }}
+              </span>
+            </td>
+            <td>
+              {% if r.is_pending %}
+              <form method="post" action="{% url 'leave:cancel' uuid=r.uuid %}"
+                    onsubmit="return confirm('Withdraw this leave request?')" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red)">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+    <div style="padding:16px; display:flex; justify-content:center; gap:8px">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">Previous</a>
+      {% endif %}
+      <span style="align-self:center; font-size:.8rem; color:var(--text-muted)">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-hint">You haven't submitted any leave requests yet.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -16,6 +16,8 @@ urlpatterns = [
     path('employees/', include('employees.urls', namespace='employees')), 
     path('organization/', include('organization.urls', namespace='organization')), 
     path('payroll/', include('payroll.urls', namespace='payroll')), 
+    path("leave/", include("leave.urls", namespace="leave")),
+
 
 
    

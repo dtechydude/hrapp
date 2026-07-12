@@ -123,7 +123,7 @@
         <i class="bi bi-chevron-right sb-arrow"></i>
       </button>
       <div class="sb-sub {% block nav_leave_sub %}{% endblock %}" id="sub-leave">
-        <a href="#" class="sb-sub-item {% block nav_leave_requests %}{% endblock %}">Leave Requests</a>
+        <a href="{% url 'leave:list' %}" class="sb-sub-item {% block nav_leave_requests %}{% endblock %}">Leave Requests</a>
         <a href="#" class="sb-sub-item {% block nav_leave_calendar %}{% endblock %}">Leave Calendar</a>
         <a href="#" class="sb-sub-item {% block nav_leave_balances %}{% endblock %}">Leave Balances</a>
         <a href="#" class="sb-sub-item {% block nav_leave_types %}{% endblock %}">Leave Types</a>
@@ -153,11 +153,13 @@
 
       <button class="sb-item {% block nav_loans_open %}{% endblock %}" onclick="toggleSub(this,'sub-loans')">
         <i class="bi bi-bank2 sb-icon"></i>
-        <span class="sb-label">Loans</span>
+        <span class="sb-label">Loans/Advances</span>
         <i class="bi bi-chevron-right sb-arrow"></i>
       </button>
       <div class="sb-sub {% block nav_loans_sub %}{% endblock %}" id="sub-loans">
-        <a href="#" class="sb-sub-item {% block nav_loans_applications %}{% endblock %}">Loan Applications</a>
+        <a href="{% url 'payroll:advance-create' %}" class="sb-sub-item {% block nav_loans_applications %}{% endblock %}">Create Advance</a>
+        <a href="{% url 'payroll:advance-list' %}" class="sb-sub-item">Advances List</a>
+
         <a href="#" class="sb-sub-item {% block nav_loans_active %}{% endblock %}">Active Loans</a>
         <a href="#" class="sb-sub-item {% block nav_loans_repayment %}{% endblock %}">Repayment Schedule</a>
         <a href="#" class="sb-sub-item {% block nav_loans_types %}{% endblock %}">Loan Types</a>
@@ -165,10 +167,18 @@
 
       <button class="sb-item {% block nav_deductions_open %}{% endblock %}" onclick="toggleSub(this,'sub-deductions')">
         <i class="bi bi-dash-circle sb-icon"></i>
-        <span class="sb-label">Deductions</span>
+        <span class="sb-label">Deduction/Allowance</span>
         <i class="bi bi-chevron-right sb-arrow"></i>
       </button>
       <div class="sb-sub {% block nav_deductions_sub %}{% endblock %}" id="sub-deductions">
+        <a href="{% url 'payroll:deduction-list' %}" class="sb-sub-item ">Deduction List</a>
+        <a href="{% url 'payroll:deduction-create' %}" class="sb-sub-item ">Create Deduction</a>
+        <a href="{% url 'payroll:allowance-list' %}" class="sb-sub-item ">Allowances List</a>
+        <a href="{% url 'payroll:allowance-create' %}" class="sb-sub-item ">Create Allowances</a>
+        <a href="{% url 'payroll:bonus-create' %}" class="sb-sub-item ">Create Bonuses</a>
+        <a href="{% url 'payroll:bonus-create' %}" class="sb-sub-item ">Create Bonuses</a>
+
+
         <a href="#" class="sb-sub-item {% block nav_deductions_paye %}{% endblock %}">PAYE / Tax</a>
         <a href="#" class="sb-sub-item {% block nav_deductions_pension %}{% endblock %}">Pension</a>
         <a href="#" class="sb-sub-item {% block nav_deductions_nhf %}{% endblock %}">NHF</a>

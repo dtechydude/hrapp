@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'dashboard.apps.DashboardConfig',
     'organization.apps.OrganizationConfig',
     'payroll.apps.PayrollConfig',
+    'leave.apps.LeaveConfig',
     'core',           # ← add this, before organization
 
     

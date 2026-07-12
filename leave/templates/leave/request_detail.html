@@ -1,0 +1,139 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Leave Request — {{ leave_request.staff.full_name }}{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{% url 'leave:list' %}" style="color:inherit">Leave Requests</a>
+  <i class="bi bi-chevron-right"></i>
+  <span class="bc-current">{{ leave_request.staff.full_name }}</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.detail-grid { display:grid; grid-template-columns: 1fr 320px; gap:24px; align-items:start; }
+@media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
+
+.info-row { display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--border); font-size:.84rem; }
+.info-row:last-child { border-bottom:none; }
+.info-row .lbl { color:var(--text-muted); }
+.info-row .val { font-weight:600; color:var(--text-primary); text-align:right; }
+
+.reason-block { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; font-size:.85rem; color:var(--text-secondary); line-height:1.6; margin-top:6px; }
+
+.review-note-field { width:100%; padding:11px 13px; border:1.5px solid var(--border); border-radius:8px; font-size:.86rem; font-family:inherit; resize:vertical; min-height:70px; background:var(--surface-2); }
+.review-note-field:focus { border-color:var(--gold); outline:none; box-shadow:0 0 0 3px var(--gold-muted); background:var(--surface); }
+
+.staff-mini { display:flex; align-items:center; gap:12px; padding-bottom:16px; margin-bottom:16px; border-bottom:1px solid var(--border); }
+.staff-mini-avatar { width:44px; height:44px; border-radius:50%; background:var(--gold-muted); border:1.5px solid var(--gold-border); color:var(--gold); display:flex; align-items:center; justify-content:center; font-weight:700; font-family:var(--font-display); flex-shrink:0; }
+.staff-mini-name { font-weight:700; color:var(--text-primary); font-size:.9rem; }
+.staff-mini-sub { font-size:.76rem; color:var(--text-muted); }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header section-mb">
+  <div>
+    <div class="page-title">Leave Request Review</div>
+    <div class="page-subtitle">{{ leave_request.leave_type.name }} · {{ leave_request.days_requested }} day{{ leave_request.days_requested|pluralize }}</div>
+  </div>
+  <div class="page-header-actions">
+    <a href="{% url 'employees:detail' uuid=leave_request.staff.uuid %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-person-vcard"></i> View Staff Profile
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="bi bi-calendar2-event"></i> Request Details</div>
+        <span class="pill {% if leave_request.status == 'Approved' %}active{% elif leave_request.status == 'Declined' %}suspended{% elif leave_request.status == 'Cancelled' %}draft{% else %}pending{% endif %}">
+          {{ leave_request.status }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="staff-mini">
+          <div class="staff-mini-avatar">{{ leave_request.staff.user.first_name|first|upper }}{{ leave_request.staff.user.last_name|first|upper }}</div>
+          <div>
+            <div class="staff-mini-name">{{ leave_request.staff.full_name }}</div>
+            <div class="staff-mini-sub">{{ leave_request.staff.employee_no }} · {{ leave_request.staff.staff_rank|default:leave_request.staff.employment_type }}</div>
+          </div>
+        </div>
+
+        <div class="info-row"><span class="lbl">Leave Type</span><span class="val">{{ leave_request.leave_type.name }}</span></div>
+        <div class="info-row"><span class="lbl">Start Date</span><span class="val">{{ leave_request.start_date|date:"d F Y" }}</span></div>
+        <div class="info-row"><span class="lbl">End Date</span><span class="val">{{ leave_request.end_date|date:"d F Y" }}</span></div>
+        <div class="info-row"><span class="lbl">Days Requested</span><span class="val">{{ leave_request.days_requested }}</span></div>
+        <div class="info-row"><span class="lbl">Applied On</span><span class="val">{{ leave_request.applied_at|date:"d M Y, H:i" }}</span></div>
+        {% if leave_request.reviewed_at %}
+        <div class="info-row"><span class="lbl">Reviewed By</span><span class="val">{{ leave_request.reviewed_by.get_full_name|default:leave_request.reviewed_by.username }}</span></div>
+        <div class="info-row"><span class="lbl">Reviewed On</span><span class="val">{{ leave_request.reviewed_at|date:"d M Y, H:i" }}</span></div>
+        {% if leave_request.review_note %}
+        <div class="info-row"><span class="lbl">Review Note</span><span class="val">{{ leave_request.review_note }}</span></div>
+        {% endif %}
+        {% endif %}
+
+        <div style="margin-top:14px">
+          <div class="lbl" style="font-size:.82rem;color:var(--text-muted);margin-bottom:4px">Reason</div>
+          <div class="reason-block">{{ leave_request.reason }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    {% if balance %}
+    <div class="card section-mb">
+      <div class="card-header"><div class="card-title"><i class="bi bi-piggy-bank"></i> Leave Balance ({{ leave_request.start_date.year }})</div></div>
+      <div class="card-body">
+        <div class="info-row"><span class="lbl">Entitled</span><span class="val">{{ balance.entitled_days }} days</span></div>
+        <div class="info-row"><span class="lbl">Used</span><span class="val">{{ balance.used_days }} days</span></div>
+        <div class="info-row"><span class="lbl">Remaining</span><span class="val">{{ balance.remaining_days }} days</span></div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if leave_request.is_pending %}
+    <div class="card">
+      <div class="card-header"><div class="card-title"><i class="bi bi-shield-check"></i> Take Action</div></div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+
+        <form method="post" action="{% url 'leave:approve' uuid=leave_request.uuid %}"
+              onsubmit="return confirm('Approve this leave request for {{ leave_request.staff.full_name }}?')">
+          {% csrf_token %}
+          <label style="display:block;font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Note (optional)</label>
+          <textarea name="note" class="review-note-field" placeholder="Any note for the staff member..."></textarea>
+          <button type="submit" class="btn btn-gold btn-sm btn-full" style="margin-top:10px">
+            <i class="bi bi-check-circle-fill"></i> Approve
+          </button>
+        </form>
+
+        <form method="post" action="{% url 'leave:decline' uuid=leave_request.uuid %}"
+              onsubmit="return confirm('Decline this leave request for {{ leave_request.staff.full_name }}?')">
+          {% csrf_token %}
+          <label style="display:block;font-size:.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Reason for declining</label>
+          <textarea name="note" class="review-note-field" placeholder="Let the staff member know why..."></textarea>
+          <button type="submit" class="btn btn-sm btn-full" style="margin-top:10px;color:var(--red);border:1px solid var(--red);background:transparent">
+            <i class="bi bi-x-circle-fill"></i> Decline
+          </button>
+        </form>
+
+      </div>
+    </div>
+    {% else %}
+    <div class="card">
+      <div style="padding:20px 16px;text-align:center;font-size:.84rem;color:var(--text-muted)">
+        <i class="bi bi-check2-circle" style="font-size:1.6rem;display:block;margin-bottom:8px;color:var(--gold)"></i>
+        This request has already been {{ leave_request.status|lower }}.
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
