@@ -29,7 +29,7 @@ from django.views import View
 from django.utils.decorators import method_decorator
 
 from .forms import BulkPhotoUploadForm
-from .services import save_bulk_photos, get_users_for_type, get_class_choices
+from dashboard.models import CorporateIdentity
 
 # Create your views here.
 
@@ -216,111 +216,6 @@ def all_users(request):
     return render(request, 'users/all_registered_users.html', context)
 
 
-# # Enroll students view
-# @login_required
-# def enroll_student(request):
-#     user_form = UserRegistrationForm(request.POST or None)
-#     student_form = StudentEnrollmentForm(request.POST or None)
-    
-#     # Retrieve the school identity information
-#     try:
-#         school_identity = SchoolIdentity.objects.first()
-#     except SchoolIdentity.DoesNotExist:
-#         school_identity = None
-
-#     if request.method == 'POST':
-#         # Check which form was submitted using a hidden input or button name
-#         if 'user_submit' in request.POST:
-#             if user_form.is_valid():
-#                 user_data = user_form.cleaned_data
-#                 user = User.objects.create_user(
-#                     username=user_data['username'],
-#                     email=user_data['email'],
-#                     password=user_data['password'],
-#                     first_name=user_data['first_name'],
-#                     last_name=user_data['last_name']
-#                 )
-                
-#                 # Store user info in session to pass to the next step
-#                 request.session['temp_user_id'] = user.id
-                
-#                 messages.success(request, 'User created successfully! Now, please provide the student details.')
-#                 return redirect('enroll_student_details')  # Redirect to the next step
-
-#         elif 'student_submit' in request.POST:
-#             if 'temp_user_id' in request.session:
-#                 user_id = request.session['temp_user_id']
-#                 try:
-#                     user = User.objects.get(id=user_id)
-#                 except User.DoesNotExist:
-#                     messages.error(request, 'An error occurred. Please restart the enrollment process.')
-#                     return redirect('enroll_student')
-                
-#                 # Bind the student form to the request data
-#                 student_form = StudentEnrollmentForm(request.POST)
-#                 if student_form.is_valid():
-#                     student = student_form.save(commit=False)
-#                     student.user = user  # Link the student record to the new user
-#                     student.USN = user.username # Ensure USN is the same as username
-#                     student.first_name = user.first_name # Sync first name
-#                     student.last_name = user.last_name # Sync last name
-#                     student.save()
-                    
-#                     # Clear session data
-#                     del request.session['temp_user_id']
-
-#                     messages.success(request, f'Student {student.get_full_name()} has been successfully enrolled!')
-#                     return redirect('some_success_page') # Redirect to a success page
-
-#     return render(request, 'users/enroll_student.html', {
-#         'user_form': user_form,
-#         'student_form': student_form,
-#         'school_identity': school_identity, # Add school_identity to the context
-#     })
-
-# @login_required
-# def enroll_student_details(request):
-#     if 'temp_user_id' not in request.session:
-#         messages.error(request, 'Invalid session. Please start the enrollment process from the beginning.')
-#         return redirect('enroll_student')
-    
-#     user_id = request.session['temp_user_id']
-#     try:
-#         user = User.objects.get(id=user_id)
-#     except User.DoesNotExist:
-#         messages.error(request, 'User not found. Please restart the enrollment process.')
-#         return redirect('enroll_student')
-
-#     student_form = StudentEnrollmentForm(request.POST or None, initial={'USN': user.username})
-
-#     # Retrieve the school identity information for this view as well
-#     try:
-#         school_identity = SchoolIdentity.objects.first()
-#     except SchoolIdentity.DoesNotExist:
-#         school_identity = None
-
-#     if request.method == 'POST':
-#         if student_form.is_valid():
-#             student = student_form.save(commit=False)
-#             student.user = user
-#             student.USN = user.username
-#             student.first_name = user.first_name
-#             student.last_name = user.last_name
-#             student.save()
-            
-#             del request.session['temp_user_id']
-            
-#             messages.success(request, f'Student {student.get_full_name()} has been successfully enrolled!')
-#             return redirect('success_page')
-    
-#     return render(request, 'users/enroll_student_details.html', {
-#         'student_form': student_form,
-#         'user_first_name': user.first_name,
-#         'user_last_name': user.last_name,
-#         'school_identity': school_identity, # Add school_identity to the context
-#     })
-
-
 @login_required
 def enroll_success(request):
     return render(request, 'users/enroll_success.html')
@@ -367,96 +262,118 @@ class SafePasswordResetView(auth_views.PasswordResetView):
         context = super().get_extra_email_context() or {}
 
         try:
-            context['school_info'] = SchoolIdentity.objects.first()
+            context['corporate_info'] = CorporateIdentity.objects.first()
         except (OperationalError, ProgrammingError):
             # Table does not exist yet (before migration)
-            context['school_info'] = None
+            context['corporate_info'] = None
 
         return context
 
 
 """
-views.py — Bulk Profile Photo Upload Views  (REFACTORED)
-KwikSchools — Smarter Schools!
+users/bulk_photo_views.py
+───────────────────────────────────────────────────────────────────────────
+Independent bulk profile-photo upload views. Kept out of users/views.py
+entirely so your existing single-photo admin upload flow is completely
+untouched — this file only needs two lines added to users/urls.py to
+wire in (see the README).
+───────────────────────────────────────────────────────────────────────────
 """
+import logging
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.views import View
+
+from .services import get_category_choices, get_profiles_for_type, save_bulk_photos
 
 logger = logging.getLogger(__name__)
 
-VALID_USER_TYPES = ('staff', 'all')
+VALID_CATEGORIES = tuple(value for value, _ in get_category_choices()) + ("all",)
 
 
-def _is_staff(user):
+class ManagerRequiredMixin(LoginRequiredMixin):
+    """
+    Superusers or is_staff only. Deliberately self-contained (doesn't
+    import a mixin from another app) so this feature stays independent
+    and doesn't create a new cross-app dependency.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not (request.user.is_staff or request.user.is_superuser):
+            raise PermissionDenied("You do not have permission to bulk-upload profile photos.")
+        return super().dispatch(request, *args, **kwargs)
+
+
+def _is_manager(user):
     return user.is_active and (user.is_staff or user.is_superuser)
 
 
-staff_only = user_passes_test(_is_staff, login_url='login')
+# ── Main view ──────────────────────────────────────────────────────────
 
-
-# ── Main view ─────────────────────────────────────────────────────────────────
-
-@method_decorator([login_required(login_url='login'), staff_only], name='dispatch')
-class BulkPhotoUploadView(View):
-    template_name = 'users/bulk_photo_upload.html'
+class BulkPhotoUploadView(ManagerRequiredMixin, View):
+    template_name = "users/bulk_photo_upload.html"
 
     def _ctx(self):
         return {
-            'form': BulkPhotoUploadForm(),
-            'class_choices': get_class_choices(),
+            "category_choices": get_category_choices(),
+            "page_title": "Bulk Photo Upload",
+            "breadcrumb": "Bulk Photo Upload",
         }
 
     def get(self, request):
         return render(request, self.template_name, self._ctx())
 
     def post(self, request):
-        uploaded_files = {
-            k: request.FILES[k]
-            for k in request.FILES
-            if k.startswith('photo_')
-        }
+        uploaded_files = {k: request.FILES[k] for k in request.FILES if k.startswith("photo_")}
 
         if not uploaded_files:
-            messages.warning(request, 'No photos were selected. Click a card and pick an image first.')
+            messages.warning(request, "No photos were selected. Click a card and pick an image first.")
             return render(request, self.template_name, self._ctx())
 
         results = save_bulk_photos(uploaded_files)
 
-        summary = (
-            f"Done — {results['saved']} photo(s) saved, "
-            f"{results['skipped']} skipped."
-        )
-        level = messages.warning if results['errors'] else messages.success
+        summary = f"Done — {results['saved']} photo(s) saved, {results['skipped']} skipped."
+        level = messages.warning if results["errors"] else messages.success
         level(request, summary)
 
         ctx = self._ctx()
-        ctx.update({'results': results, 'summary': summary})
+        ctx.update({"results": results, "summary": summary})
         return render(request, self.template_name, ctx)
 
 
-# ── AJAX: load user grid ──────────────────────────────────────────────────────
+# ── AJAX: load user grid ──────────────────────────────────────────────
 
-@login_required(login_url='login')
-@user_passes_test(_is_staff, login_url='login')
-def ajax_load_users(request):
+@login_required
+@user_passes_test(_is_manager)
+def ajax_load_profiles(request):
     """
-    GET ?user_type=student|teacher|parent|all  [&class_filter=<pk>]
+    GET ?user_type=employee|<UserType value>|all
 
-    Returns JSON list of user dicts for the photo grid.
-    Logs full tracebacks — no silent failures.
+    Returns JSON list of profile/staff dicts for the photo grid. URL
+    name (see urls.py) is `bulk-photo-load-users`, referenced from the
+    fetch call in bulk_photo_upload.html. Query param is still named
+    `user_type` to match the existing dropdown id in the template —
+    its accepted values now include 'employee' alongside the Profile
+    UserType values.
     """
-    user_type    = request.GET.get('user_type', '').strip()
-    class_filter = request.GET.get('class_filter', '').strip()
+    category = request.GET.get("user_type", "").strip()
 
-    if user_type not in VALID_USER_TYPES:
+    if category not in VALID_CATEGORIES:
         return JsonResponse(
-            {'error': f'Invalid user_type "{user_type}". Must be one of: {", ".join(VALID_USER_TYPES)}.'},
+            {"error": f'Invalid category "{category}". Must be one of: {", ".join(VALID_CATEGORIES)}.'},
             status=400,
         )
 
-    class_pk = int(class_filter) if class_filter.isdigit() else None
-
     try:
-        users = get_users_for_type(user_type, class_pk)
-        return JsonResponse({'users': users, 'count': len(users)})
+        users = get_profiles_for_type(category)
+        return JsonResponse({"users": users, "count": len(users)})
     except Exception as e:
-        logger.exception('ajax_load_users: unhandled exception')
-        return JsonResponse({'error': str(e)}, status=500)
+        logger.exception("ajax_load_profiles: unhandled exception")
+        return JsonResponse({"error": str(e)}, status=500)

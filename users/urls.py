@@ -5,12 +5,9 @@ from users import views as user_views
 from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
 from .views import SafePasswordResetView
-from .views import BulkPhotoUploadView, ajax_load_users
+from .views import BulkPhotoUploadView, ajax_load_profiles
 
 
-# app_name ='users'
-# We fetch the school data once here or inside the view
-# school_data = SchoolIdentity.objects.first()
 
 urlpatterns = [
     path('', auth_views.LoginView.as_view(template_name='users/login.html'), name="login"),
@@ -31,21 +28,14 @@ urlpatterns = [
     path('logout-success/', user_views.logout_success, name='logout_success'),
 
     # Bulk Picture Upload
-    path(
-        'bulk-photos/',
-        BulkPhotoUploadView.as_view(),
-        name='bulk-photo-upload',
-    ),
-    path(
-        'bulk-photos/load-users/',
-        ajax_load_users,
-        name='bulk-photo-load-users',
-    ),
+    path("bulk-photos/", BulkPhotoUploadView.as_view(), name="bulk-photo-upload"),
+    path("bulk-photos/load/", ajax_load_profiles, name="bulk-photo-load-users"),
+
     path(
         'password-reset/',
         SafePasswordResetView.as_view(),
         name='password_reset'
-    ),
+    ), 
     path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='users/password_reset_done.html'), name="password_reset_done"),
     path('password-reset-confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='users/password_reset_confirm.html', success_url = reverse_lazy('login')), name="password_reset_confirm"),
     path('password-reset-complete/', auth_views.PasswordResetCompleteView.as_view(template_name='users/password_reset_complete.html'), name="password_reset_complete"),
