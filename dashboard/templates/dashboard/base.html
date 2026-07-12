@@ -65,11 +65,7 @@
         <i class="bi bi-speedometer2 sb-icon"></i>
         <span class="sb-label">Dashboard</span>
       </a>
-       <a href="/admin/" class="sb-item">
-        <i class="bi bi-speedometer2 sb-icon"></i>
-        <span class="sb-label" style="color:red;"> <strong>ADMIN PANEL</strong></span>
-      </a>
-
+       
       <!-- HUMAN RESOURCES -->
       <div class="sb-group">Human Resources</div>
       <button class="sb-item {% block nav_staff_open %}{% endblock %}" onclick="toggleSub(this,'sub-staff')">
@@ -234,9 +230,9 @@
         <i class="bi bi-shield-lock-fill sb-icon"></i>
         <span class="sb-label">Audit Trail</span>
       </a>
-      <a href="#" class="sb-item {% block nav_settings %}{% endblock %}">
+      <a href="/admin/" class="sb-item {% block nav_settings %}{% endblock %}">
         <i class="bi bi-gear-fill sb-icon"></i>
-        <span class="sb-label">Settings</span>
+        <span class="sb-label" style='color:red;'>Settings</span>
       </a>
 
       <!-- Logout -->
